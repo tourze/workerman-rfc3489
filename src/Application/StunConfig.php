@@ -2,6 +2,8 @@
 
 namespace Tourze\Workerman\RFC3489\Application;
 
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 use Tourze\Workerman\RFC3489\Message\Constants;
 
 /**
@@ -24,7 +26,7 @@ class StunConfig
             'workers' => 1,
             'daemon' => false,
         ],
-        
+
         // 客户端配置
         'client' => [
             'server_address' => 'stun.l.google.com',
@@ -32,7 +34,7 @@ class StunConfig
             'timeout' => 5000,
             'retry_count' => 3,
         ],
-        
+
         // 传输配置
         'transport' => [
             'type' => 'udp',
@@ -41,7 +43,7 @@ class StunConfig
             'socket_timeout' => 30,
             'socket_buffer_size' => 65535,
         ],
-        
+
         // 日志配置
         'log' => [
             'enabled' => true,
@@ -49,12 +51,12 @@ class StunConfig
             'file' => null,
         ],
     ];
-    
+
     /**
      * 当前配置
      */
     private array $config;
-    
+
     /**
      * 创建一个新的STUN配置
      *
@@ -64,7 +66,7 @@ class StunConfig
     {
         $this->config = array_replace_recursive(self::DEFAULT_CONFIG, $config);
     }
-    
+
     /**
      * 获取配置值
      *
@@ -76,17 +78,17 @@ class StunConfig
     {
         $keys = explode('.', $path);
         $value = $this->config;
-        
+
         foreach ($keys as $key) {
             if (!is_array($value) || !array_key_exists($key, $value)) {
                 return $default;
             }
             $value = $value[$key];
         }
-        
+
         return $value;
     }
-    
+
     /**
      * 设置配置值
      *
@@ -99,19 +101,19 @@ class StunConfig
         $keys = explode('.', $path);
         $lastKey = array_pop($keys);
         $config = &$this->config;
-        
+
         foreach ($keys as $key) {
             if (!isset($config[$key]) || !is_array($config[$key])) {
                 $config[$key] = [];
             }
             $config = &$config[$key];
         }
-        
+
         $config[$lastKey] = $value;
-        
+
         return $this;
     }
-    
+
     /**
      * 检查配置是否存在
      *
@@ -122,17 +124,17 @@ class StunConfig
     {
         $keys = explode('.', $path);
         $value = $this->config;
-        
+
         foreach ($keys as $key) {
             if (!is_array($value) || !array_key_exists($key, $value)) {
                 return false;
             }
             $value = $value[$key];
         }
-        
+
         return true;
     }
-    
+
     /**
      * 获取整个配置数组
      *
@@ -142,7 +144,7 @@ class StunConfig
     {
         return $this->config;
     }
-    
+
     /**
      * 从文件加载配置
      *
@@ -155,17 +157,17 @@ class StunConfig
         if (!file_exists($file)) {
             throw new \RuntimeException("配置文件不存在: $file");
         }
-        
+
         $config = null;
-        
+
         // 根据文件扩展名决定如何加载
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        
+
         switch ($extension) {
             case 'php':
                 $config = require $file;
                 break;
-                
+
             case 'json':
                 $content = file_get_contents($file);
                 $config = json_decode($content, true);
@@ -173,31 +175,29 @@ class StunConfig
                     throw new \RuntimeException("无法解析JSON配置文件: " . json_last_error_msg());
                 }
                 break;
-                
+
             case 'yaml':
             case 'yml':
-                if (!function_exists('yaml_parse_file')) {
-                    throw new \RuntimeException("无法解析YAML配置文件: 未安装yaml扩展");
-                }
-                $config = yaml_parse_file($file);
-                if ($config === false) {
-                    throw new \RuntimeException("无法解析YAML配置文件");
+                try {
+                    $config = Yaml::parseFile($file);
+                } catch (ParseException $e) {
+                    throw new \RuntimeException("无法解析YAML配置文件: " . $e->getMessage());
                 }
                 break;
-                
+
             default:
                 throw new \RuntimeException("不支持的配置文件格式: $extension");
         }
-        
+
         if (!is_array($config)) {
             throw new \RuntimeException("配置文件必须返回数组");
         }
-        
+
         $this->config = array_replace_recursive(self::DEFAULT_CONFIG, $this->config, $config);
-        
+
         return $this;
     }
-    
+
     /**
      * 保存配置到文件
      *
@@ -208,30 +208,31 @@ class StunConfig
     public function saveToFile(string $file): bool
     {
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        
+
         switch ($extension) {
             case 'php':
                 $content = "<?php\n\nreturn " . var_export($this->config, true) . ";\n";
                 break;
-                
+
             case 'json':
                 $content = json_encode($this->config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                 break;
-                
+
             case 'yaml':
             case 'yml':
-                if (!function_exists('yaml_emit')) {
-                    throw new \RuntimeException("无法生成YAML配置文件: 未安装yaml扩展");
+                try {
+                    $content = Yaml::dump($this->config, 4, 2); // 缩进4级，每级缩进2个空格
+                } catch (\Exception $e) {
+                    throw new \RuntimeException("无法生成YAML配置文件: " . $e->getMessage());
                 }
-                $content = yaml_emit($this->config);
                 break;
-                
+
             default:
                 throw new \RuntimeException("不支持的配置文件格式: $extension");
         }
-        
+
         $result = file_put_contents($file, $content);
-        
+
         return $result !== false;
     }
-} 
+}
