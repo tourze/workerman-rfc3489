@@ -117,7 +117,7 @@ class Password extends MessageAttribute
         // 提取密码
         $password = substr($data, $offset + 4, $valueLength);
         
-        return new static($password);
+        return new self($password);
     }
 
     /**

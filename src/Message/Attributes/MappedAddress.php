@@ -160,7 +160,7 @@ class MappedAddress extends MessageAttribute
                 throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
             }
             
-            return new static($ip, $port);
+            return new self($ip, $port);
         } catch (\Exception $e) {
             throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }

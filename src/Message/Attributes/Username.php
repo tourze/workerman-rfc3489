@@ -112,7 +112,7 @@ class Username extends MessageAttribute
         // 提取用户名
         $username = substr($data, $offset + 4, $valueLength);
         
-        return new static($username);
+        return new self($username);
     }
 
     /**
