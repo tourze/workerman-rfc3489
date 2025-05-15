@@ -14,225 +14,226 @@ use Tourze\Workerman\RFC3489\Message\Constants;
 class StunConfig
 {
     /**
-     * 默认配置
+     * 绑定地址
      */
-    private const DEFAULT_CONFIG = [
-        // 服务器配置
-        'server' => [
-            'bind_ip' => '0.0.0.0',
-            'bind_port' => Constants::DEFAULT_PORT,
-            'alternate_ip' => '0.0.0.0',
-            'alternate_port' => 0,
-            'workers' => 1,
-            'daemon' => false,
-        ],
-
-        // 客户端配置
-        'client' => [
-            'server_address' => 'stun.l.google.com',
-            'server_port' => 19302,
-            'timeout' => 5000,
-            'retry_count' => 3,
-        ],
-
-        // 传输配置
-        'transport' => [
-            'type' => 'udp',
-            'local_ip' => '0.0.0.0',
-            'local_port' => 0,
-            'socket_timeout' => 30,
-            'socket_buffer_size' => 65535,
-        ],
-
-        // 日志配置
-        'log' => [
-            'enabled' => true,
-            'level' => 'info', // debug, info, warning, error
-            'file' => null,
-        ],
-    ];
-
+    private string $bindAddress = '0.0.0.0';
+    
     /**
-     * 当前配置
+     * 绑定端口
      */
-    private array $config;
-
+    private int $bindPort = Constants::DEFAULT_PORT;
+    
+    /**
+     * 请求超时（毫秒）
+     */
+    private int $requestTimeout = 5000;
+    
+    /**
+     * STUN服务器地址列表
+     */
+    private array $serverAddresses = [];
+    
+    /**
+     * 调试模式
+     */
+    private bool $debugMode = false;
+    
     /**
      * 创建一个新的STUN配置
-     *
-     * @param array $config 配置数组，将与默认配置合并
      */
-    public function __construct(array $config = [])
+    public function __construct()
     {
-        $this->config = array_replace_recursive(self::DEFAULT_CONFIG, $config);
+        // 默认构造函数
     }
-
+    
     /**
-     * 获取配置值
-     *
-     * @param string $path 配置路径，使用点号分隔，例如 'server.bind_ip'
-     * @param mixed $default 默认值，如果配置不存在则返回此值
-     * @return mixed 配置值
+     * 获取绑定地址
+     * 
+     * @return string 绑定地址
      */
-    public function get(string $path, $default = null)
+    public function getBindAddress(): string
     {
-        $keys = explode('.', $path);
-        $value = $this->config;
-
-        foreach ($keys as $key) {
-            if (!is_array($value) || !array_key_exists($key, $value)) {
-                return $default;
-            }
-            $value = $value[$key];
-        }
-
-        return $value;
+        return $this->bindAddress;
     }
-
+    
     /**
-     * 设置配置值
-     *
-     * @param string $path 配置路径，使用点号分隔，例如 'server.bind_ip'
-     * @param mixed $value 配置值
+     * 设置绑定地址
+     * 
+     * @param string $bindAddress 绑定地址
      * @return self 当前实例，用于链式调用
      */
-    public function set(string $path, $value): self
+    public function setBindAddress(string $bindAddress): self
     {
-        $keys = explode('.', $path);
-        $lastKey = array_pop($keys);
-        $config = &$this->config;
-
-        foreach ($keys as $key) {
-            if (!isset($config[$key]) || !is_array($config[$key])) {
-                $config[$key] = [];
-            }
-            $config = &$config[$key];
-        }
-
-        $config[$lastKey] = $value;
-
+        $this->bindAddress = $bindAddress;
         return $this;
     }
-
+    
     /**
-     * 检查配置是否存在
-     *
-     * @param string $path 配置路径
-     * @return bool 如果配置存在则返回true
+     * 获取绑定端口
+     * 
+     * @return int 绑定端口
      */
-    public function has(string $path): bool
+    public function getBindPort(): int
     {
-        $keys = explode('.', $path);
-        $value = $this->config;
-
-        foreach ($keys as $key) {
-            if (!is_array($value) || !array_key_exists($key, $value)) {
-                return false;
-            }
-            $value = $value[$key];
-        }
-
-        return true;
+        return $this->bindPort;
     }
-
+    
     /**
-     * 获取整个配置数组
-     *
+     * 设置绑定端口
+     * 
+     * @param int $bindPort 绑定端口
+     * @return self 当前实例，用于链式调用
+     */
+    public function setBindPort(int $bindPort): self
+    {
+        $this->bindPort = $bindPort;
+        return $this;
+    }
+    
+    /**
+     * 获取请求超时
+     * 
+     * @return int 请求超时（毫秒）
+     */
+    public function getRequestTimeout(): int
+    {
+        return $this->requestTimeout;
+    }
+    
+    /**
+     * 设置请求超时
+     * 
+     * @param int $requestTimeout 请求超时（毫秒）
+     * @return self 当前实例，用于链式调用
+     */
+    public function setRequestTimeout(int $requestTimeout): self
+    {
+        $this->requestTimeout = $requestTimeout;
+        return $this;
+    }
+    
+    /**
+     * 获取服务器地址列表
+     * 
+     * @return array 服务器地址列表，每个元素为 [地址, 端口] 的数组
+     */
+    public function getServerAddresses(): array
+    {
+        return $this->serverAddresses;
+    }
+    
+    /**
+     * 添加服务器地址
+     * 
+     * @param string $address 服务器地址
+     * @param int $port 服务器端口
+     * @return self 当前实例，用于链式调用
+     */
+    public function addServerAddress(string $address, int $port): self
+    {
+        $this->serverAddresses[] = [$address, $port];
+        return $this;
+    }
+    
+    /**
+     * 检查是否为调试模式
+     * 
+     * @return bool 如果是调试模式则返回true
+     */
+    public function isDebugMode(): bool
+    {
+        return $this->debugMode;
+    }
+    
+    /**
+     * 设置调试模式
+     * 
+     * @param bool $debugMode 是否启用调试模式
+     * @return self 当前实例，用于链式调用
+     */
+    public function setDebugMode(bool $debugMode): self
+    {
+        $this->debugMode = $debugMode;
+        return $this;
+    }
+    
+    /**
+     * 从数组创建配置
+     * 
+     * @param array $config 配置数组
+     * @return self 新的配置实例
+     */
+    public static function fromArray(array $config): self
+    {
+        $instance = new self();
+        
+        if (isset($config['bindAddress'])) {
+            $instance->setBindAddress($config['bindAddress']);
+        }
+        
+        if (isset($config['bindPort'])) {
+            $instance->setBindPort($config['bindPort']);
+        }
+        
+        if (isset($config['requestTimeout'])) {
+            $instance->setRequestTimeout($config['requestTimeout']);
+        }
+        
+        if (isset($config['debugMode'])) {
+            $instance->setDebugMode($config['debugMode']);
+        }
+        
+        if (isset($config['serverAddresses']) && is_array($config['serverAddresses'])) {
+            foreach ($config['serverAddresses'] as $server) {
+                if (is_array($server) && count($server) >= 2) {
+                    $instance->addServerAddress($server[0], $server[1]);
+                }
+            }
+        }
+        
+        return $instance;
+    }
+    
+    /**
+     * 将配置转换为数组
+     * 
      * @return array 配置数组
      */
     public function toArray(): array
     {
-        return $this->config;
+        return [
+            'bindAddress' => $this->bindAddress,
+            'bindPort' => $this->bindPort,
+            'requestTimeout' => $this->requestTimeout,
+            'serverAddresses' => $this->serverAddresses,
+            'debugMode' => $this->debugMode,
+        ];
     }
-
+    
     /**
-     * 从文件加载配置
-     *
-     * @param string $file 配置文件路径
-     * @return self 当前实例，用于链式调用
-     * @throws \RuntimeException 如果无法加载配置文件
+     * 从YAML字符串创建配置
+     * 
+     * @param string $yaml YAML字符串
+     * @return self 新的配置实例
+     * @throws \RuntimeException 如果无法解析YAML
      */
-    public function loadFromFile(string $file): self
+    public static function fromYaml(string $yaml): self
     {
-        if (!file_exists($file)) {
-            throw new \RuntimeException("配置文件不存在: $file");
+        try {
+            $config = Yaml::parse($yaml);
+            return self::fromArray($config);
+        } catch (ParseException $e) {
+            throw new \RuntimeException("无法解析YAML配置: " . $e->getMessage());
         }
-
-        $config = null;
-
-        // 根据文件扩展名决定如何加载
-        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-        switch ($extension) {
-            case 'php':
-                $config = require $file;
-                break;
-
-            case 'json':
-                $content = file_get_contents($file);
-                $config = json_decode($content, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new \RuntimeException("无法解析JSON配置文件: " . json_last_error_msg());
-                }
-                break;
-
-            case 'yaml':
-            case 'yml':
-                try {
-                    $config = Yaml::parseFile($file);
-                } catch (ParseException $e) {
-                    throw new \RuntimeException("无法解析YAML配置文件: " . $e->getMessage());
-                }
-                break;
-
-            default:
-                throw new \RuntimeException("不支持的配置文件格式: $extension");
-        }
-
-        if (!is_array($config)) {
-            throw new \RuntimeException("配置文件必须返回数组");
-        }
-
-        $this->config = array_replace_recursive(self::DEFAULT_CONFIG, $this->config, $config);
-
-        return $this;
     }
-
+    
     /**
-     * 保存配置到文件
-     *
-     * @param string $file 文件路径
-     * @return bool 如果保存成功则返回true
-     * @throws \RuntimeException 如果无法保存配置文件
+     * 将配置转换为YAML字符串
+     * 
+     * @return string YAML字符串
      */
-    public function saveToFile(string $file): bool
+    public function toYaml(): string
     {
-        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-        switch ($extension) {
-            case 'php':
-                $content = "<?php\n\nreturn " . var_export($this->config, true) . ";\n";
-                break;
-
-            case 'json':
-                $content = json_encode($this->config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                break;
-
-            case 'yaml':
-            case 'yml':
-                try {
-                    $content = Yaml::dump($this->config, 4, 2); // 缩进4级，每级缩进2个空格
-                } catch (\Exception $e) {
-                    throw new \RuntimeException("无法生成YAML配置文件: " . $e->getMessage());
-                }
-                break;
-
-            default:
-                throw new \RuntimeException("不支持的配置文件格式: $extension");
-        }
-
-        $result = file_put_contents($file, $content);
-
-        return $result !== false;
+        return Yaml::dump($this->toArray(), 3, 2);
     }
 }

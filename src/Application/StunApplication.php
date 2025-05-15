@@ -17,12 +17,12 @@ abstract class StunApplication
      * 应用配置
      */
     protected StunConfig $config;
-    
+
     /**
      * 日志记录器
      */
     protected ?LoggerInterface $logger;
-    
+
     /**
      * 是否正在运行
      */
@@ -42,11 +42,11 @@ abstract class StunApplication
         } elseif (!$config instanceof StunConfig) {
             throw new \InvalidArgumentException('配置必须是StunConfig对象或配置数组');
         }
-        
+
         $this->config = $config;
         $this->logger = $logger;
     }
-    
+
     /**
      * 启动应用
      *
@@ -55,14 +55,14 @@ abstract class StunApplication
      * @throws StunException 如果启动失败
      */
     abstract public function start(bool $daemon = false): void;
-    
+
     /**
      * 停止应用
      *
      * @return void
      */
     abstract public function stop(): void;
-    
+
     /**
      * 重新启动应用
      *
@@ -75,7 +75,7 @@ abstract class StunApplication
         $this->stop();
         $this->start($daemon);
     }
-    
+
     /**
      * 检查应用是否正在运行
      *
@@ -85,7 +85,7 @@ abstract class StunApplication
     {
         return $this->running;
     }
-    
+
     /**
      * 获取应用配置
      *
@@ -95,7 +95,7 @@ abstract class StunApplication
     {
         return $this->config;
     }
-    
+
     /**
      * 设置应用配置
      *
@@ -109,11 +109,11 @@ abstract class StunApplication
         } elseif (!$config instanceof StunConfig) {
             throw new \InvalidArgumentException('配置必须是StunConfig对象或配置数组');
         }
-        
+
         $this->config = $config;
         return $this;
     }
-    
+
     /**
      * 获取日志记录器
      *
@@ -123,7 +123,7 @@ abstract class StunApplication
     {
         return $this->logger;
     }
-    
+
     /**
      * 设置日志记录器
      *
@@ -135,7 +135,7 @@ abstract class StunApplication
         $this->logger = $logger;
         return $this;
     }
-    
+
     /**
      * 日志记录 - 调试级别
      *
@@ -148,7 +148,7 @@ abstract class StunApplication
             $this->logger->log(LogLevel::DEBUG, "[StunApp] $message");
         }
     }
-    
+
     /**
      * 日志记录 - 信息级别
      *
@@ -161,7 +161,7 @@ abstract class StunApplication
             $this->logger->log(LogLevel::INFO, "[StunApp] $message");
         }
     }
-    
+
     /**
      * 日志记录 - 警告级别
      *
@@ -174,7 +174,7 @@ abstract class StunApplication
             $this->logger->log(LogLevel::WARNING, "[StunApp] $message");
         }
     }
-    
+
     /**
      * 日志记录 - 错误级别
      *
@@ -187,4 +187,4 @@ abstract class StunApplication
             $this->logger->log(LogLevel::ERROR, "[StunApp] $message");
         }
     }
-} 
+}

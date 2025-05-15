@@ -16,7 +16,7 @@ class TransportException extends StunException
      * @param int $code 异常代码
      * @param \Throwable|null $previous 上一个异常
      */
-    public function __construct(string $message = "传输层错误", int $code = 0, ?\Throwable $previous = null)
+    public function __construct(string $message = "Transport layer error", int $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
@@ -31,11 +31,11 @@ class TransportException extends StunException
      */
     public static function connectionFailed(string $ip, int $port, ?string $error = null): self
     {
-        $message = "无法连接到 $ip:$port";
+        $message = "Connection failed to $ip:$port";
         if ($error !== null) {
             $message .= " - $error";
         }
-        
+
         return new self($message, 1001);
     }
 
@@ -49,11 +49,11 @@ class TransportException extends StunException
      */
     public static function bindFailed(string $ip, int $port, ?string $error = null): self
     {
-        $message = "无法绑定到 $ip:$port";
+        $message = "Bind failed on $ip:$port";
         if ($error !== null) {
             $message .= " - $error";
         }
-        
+
         return new self($message, 1002);
     }
 
@@ -67,11 +67,11 @@ class TransportException extends StunException
      */
     public static function sendFailed(string $ip, int $port, ?string $error = null): self
     {
-        $message = "发送消息到 $ip:$port 失败";
+        $message = "Send failed to $ip:$port";
         if ($error !== null) {
             $message .= " - $error";
         }
-        
+
         return new self($message, 1003);
     }
 
@@ -83,12 +83,22 @@ class TransportException extends StunException
      */
     public static function receiveFailed(?string $error = null): self
     {
-        $message = "接收消息失败";
+        $message = "Receive failed";
         if ($error !== null) {
             $message .= " - $error";
         }
-        
+
         return new self($message, 1004);
+    }
+
+    /**
+     * 创建一个套接字未初始化异常
+     *
+     * @return self 异常实例
+     */
+    public static function socketNotInitialized(): self
+    {
+        return new self("Socket not initialized", 1007);
     }
 
     /**
@@ -99,7 +109,7 @@ class TransportException extends StunException
      */
     public static function timeout(int $timeout): self
     {
-        return new self("接收消息超时（{$timeout}毫秒）", 1005);
+        return new self("Receive timed out ({$timeout}ms)", 1005);
     }
 
     /**
@@ -110,11 +120,11 @@ class TransportException extends StunException
      */
     public static function invalidData(?string $error = null): self
     {
-        $message = "接收到无效数据";
+        $message = "Invalid data received";
         if ($error !== null) {
             $message .= " - $error";
         }
-        
+
         return new self($message, 1006);
     }
 }

@@ -4,6 +4,7 @@ namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
+use Tourze\Workerman\RFC3489\Utils\BinaryUtils;
 use Tourze\Workerman\RFC3489\Utils\IpUtils;
 
 /**
@@ -53,6 +54,19 @@ class MappedAddress extends MessageAttribute
     {
         return $this->ip;
     }
+    
+    /**
+     * 设置IP地址
+     *
+     * @param string $ip IP地址
+     * @return self 当前实例
+     */
+    public function setIp(string $ip): self
+    {
+        $this->ip = $ip;
+        $this->family = IpUtils::getAddressFamily($ip);
+        return $this;
+    }
 
     /**
      * 获取端口号
@@ -62,6 +76,18 @@ class MappedAddress extends MessageAttribute
     public function getPort(): int
     {
         return $this->port;
+    }
+    
+    /**
+     * 设置端口号
+     *
+     * @param int $port 端口号
+     * @return self 当前实例
+     */
+    public function setPort(int $port): self
+    {
+        $this->port = $port;
+        return $this;
     }
 
     /**
@@ -77,9 +103,40 @@ class MappedAddress extends MessageAttribute
     /**
      * {@inheritdoc}
      */
-    public function encode(): string
+    public function getValue(): string
     {
         return IpUtils::encodeAddress($this->ip, $this->port);
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function setValue(mixed $value): MessageAttribute
+    {
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException('MappedAddress属性值必须是字符串');
+        }
+        
+        [$ip, $port] = IpUtils::decodeAddress($value, 0);
+        
+        if ($ip === null) {
+            throw new \InvalidArgumentException('无法解析地址值');
+        }
+        
+        $this->ip = $ip;
+        $this->port = $port;
+        $this->family = IpUtils::getAddressFamily($ip);
+        
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function encode(): string
+    {
+        // 编码属性头部和值
+        return $this->encodeAttributeHeader() . $this->getValue() . str_repeat("\x00", $this->getPadding());
     }
 
     /**
@@ -87,13 +144,26 @@ class MappedAddress extends MessageAttribute
      */
     public static function decode(string $data, int $offset, int $length): static
     {
-        [$ip, $port] = IpUtils::decodeAddress($data, $offset);
-        
-        if ($ip === null) {
+        // 检查类型是否匹配
+        $type = BinaryUtils::decodeUint16($data, $offset);
+        if ($type !== AttributeType::MAPPED_ADDRESS->value) {
             throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
         
-        return new self($ip, $port);
+        // 跳过属性头部(4字节)
+        $valueOffset = $offset + 4;
+        
+        try {
+            [$ip, $port] = IpUtils::decodeAddress($data, $valueOffset);
+            
+            if ($ip === null) {
+                throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
+            }
+            
+            return new static($ip, $port);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
+        }
     }
 
     /**
@@ -113,6 +183,39 @@ class MappedAddress extends MessageAttribute
      */
     public function __toString(): string
     {
-        return sprintf('MAPPED-ADDRESS: %s', IpUtils::formatAddressPort($this->ip, $this->port));
+        $type = AttributeType::tryFrom($this->getType());
+        $typeName = $type ? $type->name : 'UNKNOWN';
+        
+        return sprintf(
+            '%s (0x%04X): %s',
+            $typeName,
+            $this->getType(),
+            IpUtils::formatAddressPort($this->ip, $this->port)
+        );
+    }
+    
+    /**
+     * 编码属性头部
+     * 
+     * @return string 属性头部的二进制数据
+     */
+    protected function encodeAttributeHeader(): string
+    {
+        return BinaryUtils::encodeUint16($this->getType()) . BinaryUtils::encodeUint16($this->getLength());
+    }
+    
+    /**
+     * 获取填充字节数
+     * 
+     * @return int 填充字节数
+     */
+    protected function getPadding(): int
+    {
+        $length = $this->getLength();
+        if ($length % 4 === 0) {
+            return 0;
+        }
+        
+        return 4 - ($length % 4);
     }
 }

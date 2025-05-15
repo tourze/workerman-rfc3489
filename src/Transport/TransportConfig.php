@@ -15,21 +15,21 @@ class TransportConfig
      * @param string $bindIp 本地绑定IP地址，默认为0.0.0.0（所有接口）
      * @param int $bindPort 本地绑定端口，默认为0（随机端口）
      * @param bool $blocking 是否阻塞模式，默认为true
-     * @param int $sendTimeout 发送超时（毫秒），默认为3000
-     * @param int $receiveTimeout 接收超时（毫秒），默认为3000
-     * @param int $retryCount 重试次数，默认为3
-     * @param int $retryInterval 重试间隔（毫秒），默认为500
-     * @param int $bufferSize 缓冲区大小，默认为2048
+     * @param int $sendTimeout 发送超时（毫秒），默认为500
+     * @param int $receiveTimeout 接收超时（毫秒），默认为500
+     * @param int $retryCount 重试次数，默认为2
+     * @param int $retryInterval 重试间隔（毫秒），默认为100
+     * @param int $bufferSize 缓冲区大小，默认为8192
      */
     public function __construct(
         private string $bindIp = '0.0.0.0',
         private int $bindPort = 0,
         private bool $blocking = true,
-        private int $sendTimeout = 3000,
-        private int $receiveTimeout = 3000,
-        private int $retryCount = 3,
-        private int $retryInterval = 500,
-        private int $bufferSize = 2048
+        private int $sendTimeout = 500,
+        private int $receiveTimeout = 500,
+        private int $retryCount = 2,
+        private int $retryInterval = 100,
+        private int $bufferSize = 8192
     ) {
     }
 
@@ -114,9 +114,14 @@ class TransportConfig
      *
      * @param int $sendTimeout 发送超时（毫秒）
      * @return self 当前实例，用于链式调用
+     * @throws \InvalidArgumentException 如果超时值无效
      */
     public function setSendTimeout(int $sendTimeout): self
     {
+        if ($sendTimeout < 0) {
+            throw new \InvalidArgumentException('发送超时不能为负数');
+        }
+        
         $this->sendTimeout = $sendTimeout;
         return $this;
     }
@@ -136,9 +141,14 @@ class TransportConfig
      *
      * @param int $receiveTimeout 接收超时（毫秒）
      * @return self 当前实例，用于链式调用
+     * @throws \InvalidArgumentException 如果超时值无效
      */
     public function setReceiveTimeout(int $receiveTimeout): self
     {
+        if ($receiveTimeout < 0) {
+            throw new \InvalidArgumentException('接收超时不能为负数');
+        }
+        
         $this->receiveTimeout = $receiveTimeout;
         return $this;
     }
@@ -158,9 +168,14 @@ class TransportConfig
      *
      * @param int $retryCount 重试次数
      * @return self 当前实例，用于链式调用
+     * @throws \InvalidArgumentException 如果重试次数无效
      */
     public function setRetryCount(int $retryCount): self
     {
+        if ($retryCount < 0) {
+            throw new \InvalidArgumentException('重试次数不能为负数');
+        }
+        
         $this->retryCount = $retryCount;
         return $this;
     }
@@ -180,9 +195,14 @@ class TransportConfig
      *
      * @param int $retryInterval 重试间隔（毫秒）
      * @return self 当前实例，用于链式调用
+     * @throws \InvalidArgumentException 如果重试间隔无效
      */
     public function setRetryInterval(int $retryInterval): self
     {
+        if ($retryInterval < 0) {
+            throw new \InvalidArgumentException('重试间隔不能为负数');
+        }
+        
         $this->retryInterval = $retryInterval;
         return $this;
     }
@@ -202,9 +222,14 @@ class TransportConfig
      *
      * @param int $bufferSize 缓冲区大小
      * @return self 当前实例，用于链式调用
+     * @throws \InvalidArgumentException 如果缓冲区大小无效
      */
     public function setBufferSize(int $bufferSize): self
     {
+        if ($bufferSize < 0) {
+            throw new \InvalidArgumentException('缓冲区大小不能为负数');
+        }
+        
         $this->bufferSize = $bufferSize;
         return $this;
     }

@@ -17,7 +17,7 @@ class SimpleStunServer extends StunApplication
      * STUN服务器实例
      */
     private ?StunServer $server = null;
-    
+
     /**
      * 启动STUN服务器应用
      *
@@ -31,19 +31,19 @@ class SimpleStunServer extends StunApplication
             $this->logWarning("服务器已经在运行");
             return;
         }
-        
+
         $this->logInfo("初始化STUN服务器");
-        
+
         // 获取配置
         $bindIp = $this->config->get('server.bind_ip');
         $bindPort = $this->config->get('server.bind_port');
         $alternateIp = $this->config->get('server.alternate_ip');
         $alternatePort = $this->config->get('server.alternate_port') ?: ($bindPort + 1);
-        
+
         try {
             // 创建STUN服务器
             $authHandler = $this->config->get('server.auth_enabled', false) ? [$this, 'handleAuth'] : null;
-            
+
             $this->server = StunServerFactory::create(
                 $bindIp,
                 $bindPort,
@@ -52,16 +52,16 @@ class SimpleStunServer extends StunApplication
                 $authHandler,
                 $this->logger
             );
-            
+
             $this->running = true;
-            
+
             $this->logInfo("正在启动STUN服务器，监听 {$bindIp}:{$bindPort}");
-            
+
             // 如果配置了守护进程模式，或者参数指定了守护进程模式
             $useDaemon = $this->config->get('server.daemon', false) || $daemon;
-            
+
             $this->server->start($useDaemon);
-            
+
         } catch (StunException $e) {
             $this->running = false;
             $this->logError("启动STUN服务器失败: " . $e->getMessage());
@@ -72,7 +72,7 @@ class SimpleStunServer extends StunApplication
             throw new StunException("启动服务器失败", 0, $e);
         }
     }
-    
+
     /**
      * 停止STUN服务器应用
      *
@@ -83,17 +83,17 @@ class SimpleStunServer extends StunApplication
         if (!$this->running) {
             return;
         }
-        
+
         $this->logInfo("停止STUN服务器");
-        
+
         if ($this->server !== null) {
             $this->server->stop();
             $this->server = null;
         }
-        
+
         $this->running = false;
     }
-    
+
     /**
      * 认证处理器
      *
@@ -106,12 +106,12 @@ class SimpleStunServer extends StunApplication
     {
         // 获取允许的IP列表
         $allowedIps = $this->config->get('server.allowed_ips', []);
-        
+
         // 如果没有设置允许的IP列表，则允许所有IP
         if (empty($allowedIps)) {
             return true;
         }
-        
+
         // 检查客户端IP是否在允许列表中
         foreach ($allowedIps as $allowedIp) {
             // 支持IP段匹配（简单实现）
@@ -124,11 +124,11 @@ class SimpleStunServer extends StunApplication
                 return true;
             }
         }
-        
+
         $this->logWarning("拒绝来自 {$clientIp}:{$clientPort} 的请求：IP不在允许列表中");
         return "IP不在允许列表中";
     }
-    
+
     /**
      * 检查IP是否在指定范围内
      *
@@ -142,7 +142,7 @@ class SimpleStunServer extends StunApplication
         // 将IP转换为无符号长整型
         $ipLong = ip2long($ip);
         $networkLong = ip2long($network);
-        
+
         // 子网掩码可以是前缀长度（如24）或子网掩码（如255.255.255.0）
         if (is_numeric($subnet)) {
             // CIDR前缀
@@ -151,11 +151,11 @@ class SimpleStunServer extends StunApplication
             // 子网掩码
             $mask = ip2long($subnet);
         }
-        
+
         // 检查IP是否在网络范围内
         return ($ipLong & $mask) === ($networkLong & $mask);
     }
-    
+
     /**
      * 获取STUN服务器实例
      *

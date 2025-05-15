@@ -153,4 +153,57 @@ enum AttributeType: int
     {
         return self::tryFrom($type) !== null;
     }
+    
+    /**
+     * 检查属性类型是否是已知类型
+     * 
+     * @param int $type 属性类型值
+     * @return bool 是否是已知类型
+     */
+    public static function isKnownAttribute(int $type): bool
+    {
+        return self::tryFrom($type) !== null;
+    }
+    
+    /**
+     * 获取所有地址类型属性
+     * 
+     * @return array 地址类型属性数组
+     */
+    public static function addressAttributes(): array
+    {
+        return [
+            self::MAPPED_ADDRESS,
+            self::RESPONSE_ADDRESS,
+            self::SOURCE_ADDRESS,
+            self::CHANGED_ADDRESS,
+            self::REFLECTED_FROM
+        ];
+    }
+    
+    /**
+     * 检查属性类型是否是地址类型
+     * 
+     * @param int $type 属性类型值
+     * @return bool 是否是地址类型
+     */
+    public static function isAddressAttribute(int $type): bool
+    {
+        $attribute = self::tryFrom($type);
+        if ($attribute === null) {
+            return false;
+        }
+        
+        return in_array($attribute, self::addressAttributes());
+    }
+    
+    /**
+     * 将枚举转换为字符串
+     * 
+     * @return string 枚举名称
+     */
+    public function toString(): string
+    {
+        return $this->name;
+    }
 }

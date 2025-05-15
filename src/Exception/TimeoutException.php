@@ -13,7 +13,7 @@ class TimeoutException extends StunException
      * 超时时间（毫秒）
      */
     private int $timeout;
-    
+
     /**
      * 创建一个新的超时异常
      *
@@ -27,7 +27,7 @@ class TimeoutException extends StunException
         parent::__construct($message, $code, $previous);
         $this->timeout = $timeout;
     }
-    
+
     /**
      * 获取超时时间
      *
@@ -37,7 +37,7 @@ class TimeoutException extends StunException
     {
         return $this->timeout;
     }
-    
+
     /**
      * 创建一个接收超时异常
      *
@@ -48,7 +48,7 @@ class TimeoutException extends StunException
     {
         return new self("接收消息超时（{$timeout}毫秒）", $timeout, 2001);
     }
-    
+
     /**
      * 创建一个发送超时异常
      *
@@ -59,7 +59,7 @@ class TimeoutException extends StunException
     {
         return new self("发送消息超时（{$timeout}毫秒）", $timeout, 2002);
     }
-    
+
     /**
      * 创建一个事务超时异常
      *

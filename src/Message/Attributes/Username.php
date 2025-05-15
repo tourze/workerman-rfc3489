@@ -5,6 +5,7 @@ namespace Tourze\Workerman\RFC3489\Message\Attributes;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\Constants;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
+use Tourze\Workerman\RFC3489\Utils\BinaryUtils;
 
 /**
  * USERNAME属性
@@ -52,6 +53,27 @@ class Username extends MessageAttribute
         $this->username = $username;
         return $this;
     }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getValue(): string
+    {
+        return $this->username;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function setValue(mixed $value): MessageAttribute
+    {
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException('Username属性值必须是字符串');
+        }
+        
+        $this->username = $value;
+        return $this;
+    }
 
     /**
      * {@inheritdoc}
@@ -61,7 +83,16 @@ class Username extends MessageAttribute
         // 用户名最大长度限制为512字节
         $username = substr($this->username, 0, Constants::MAX_USERNAME_LENGTH);
         
-        return $username;
+        // 编码属性头部和值
+        $encoded = $this->encodeAttributeHeader() . $username;
+        
+        // 添加必要的填充字节
+        $padding = $this->getPadding();
+        if ($padding > 0) {
+            $encoded .= str_repeat("\x00", $padding);
+        }
+        
+        return $encoded;
     }
 
     /**
@@ -69,9 +100,19 @@ class Username extends MessageAttribute
      */
     public static function decode(string $data, int $offset, int $length): static
     {
-        $username = substr($data, $offset, $length);
+        // 检查类型是否匹配
+        $type = BinaryUtils::decodeUint16($data, $offset);
+        if ($type !== AttributeType::USERNAME->value) {
+            throw new \InvalidArgumentException('无法解析USERNAME属性');
+        }
         
-        return new self($username);
+        // 读取长度
+        $valueLength = BinaryUtils::decodeUint16($data, $offset + 2);
+        
+        // 提取用户名
+        $username = substr($data, $offset + 4, $valueLength);
+        
+        return new static($username);
     }
 
     /**
@@ -79,6 +120,7 @@ class Username extends MessageAttribute
      */
     public function getLength(): int
     {
+        // 用户名长度，限制最大值
         return strlen(substr($this->username, 0, Constants::MAX_USERNAME_LENGTH));
     }
 
@@ -87,6 +129,40 @@ class Username extends MessageAttribute
      */
     public function __toString(): string
     {
-        return sprintf('USERNAME: %s', $this->username);
+        $type = AttributeType::tryFrom($this->getType());
+        $typeName = $type ? $type->name : 'UNKNOWN';
+        
+        return sprintf(
+            '%s (0x%04X): Length=%d, Value=%s',
+            $typeName,
+            $this->getType(),
+            $this->getLength(),
+            $this->username
+        );
+    }
+    
+    /**
+     * 编码属性头部
+     * 
+     * @return string 属性头部的二进制数据
+     */
+    protected function encodeAttributeHeader(): string
+    {
+        return BinaryUtils::encodeUint16($this->getType()) . BinaryUtils::encodeUint16($this->getLength());
+    }
+    
+    /**
+     * 获取填充字节数
+     * 
+     * @return int 填充字节数
+     */
+    protected function getPadding(): int
+    {
+        $length = $this->getLength();
+        if ($length % 4 === 0) {
+            return 0;
+        }
+        
+        return 4 - ($length % 4);
     }
 }

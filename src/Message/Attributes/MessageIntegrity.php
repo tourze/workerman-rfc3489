@@ -107,25 +107,19 @@ class MessageIntegrity extends MessageAttribute
         if ($length !== Constants::MESSAGE_INTEGRITY_LENGTH) {
             throw new \InvalidArgumentException('MESSAGE-INTEGRITY属性长度必须是20字节');
         }
-        
+
         $hmac = substr($data, $offset, Constants::MESSAGE_INTEGRITY_LENGTH);
-        
+
         return new self($hmac);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         return Constants::MESSAGE_INTEGRITY_LENGTH;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         return sprintf('MESSAGE-INTEGRITY: %s', bin2hex($this->hmac));
     }
-} 
+}

@@ -78,7 +78,13 @@ class IpUtils
      */
     public static function getAddressFamily(string $ip): int
     {
-        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? self::IPV4 : self::IPV6;
+        if (self::isIpv4($ip)) {
+            return self::IPV4;
+        } elseif (self::isIpv6($ip)) {
+            return self::IPV6;
+        } else {
+            return 0; // 无效的IP地址
+        }
     }
 
     /**

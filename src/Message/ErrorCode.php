@@ -113,6 +113,36 @@ enum ErrorCode: int
     }
     
     /**
+     * 获取错误代码的原因短语
+     * 
+     * @return string 原因短语
+     */
+    public function getReason(): string
+    {
+        return $this->getDefaultReason();
+    }
+    
+    /**
+     * 获取错误代码的类别（百位数字）
+     * 
+     * @return int 错误类别
+     */
+    public function getClass(): int
+    {
+        return (int)($this->value / 100);
+    }
+    
+    /**
+     * 获取错误代码的编号（个位和十位数字）
+     * 
+     * @return int 错误编号
+     */
+    public function getNumber(): int
+    {
+        return $this->value % 100;
+    }
+    
+    /**
      * 从整数值获取错误代码枚举
      * 
      * @param int $code 错误代码值
@@ -132,5 +162,15 @@ enum ErrorCode: int
     public static function isValid(int $code): bool
     {
         return self::tryFrom($code) !== null;
+    }
+    
+    /**
+     * 将枚举转换为字符串
+     * 
+     * @return string 枚举的字符串表示
+     */
+    public function toString(): string
+    {
+        return sprintf('%s (%d): %s', $this->name, $this->value, $this->getReason());
     }
 }

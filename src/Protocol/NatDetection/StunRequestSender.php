@@ -12,7 +12,7 @@ use Tourze\Workerman\RFC3489\Utils\IpUtils;
 
 /**
  * STUN请求发送器
- * 
+ *
  * 负责发送STUN请求和接收响应
  */
 class StunRequestSender
@@ -172,7 +172,7 @@ class StunRequestSender
             return $response;
         }
     }
-    
+
     /**
      * 关闭传输连接
      */

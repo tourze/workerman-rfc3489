@@ -88,11 +88,11 @@ class ReflectedFrom extends MessageAttribute
     public static function decode(string $data, int $offset, int $length): static
     {
         [$ip, $port] = IpUtils::decodeAddress($data, $offset);
-        
+
         if ($ip === null) {
             throw new \InvalidArgumentException('无法解析REFLECTED-FROM属性');
         }
-        
+
         return new self($ip, $port);
     }
 
@@ -103,14 +103,11 @@ class ReflectedFrom extends MessageAttribute
     {
         // 地址族是IPv4还是IPv6，长度不同
         $ipLength = $this->family === IpUtils::IPV4 ? 4 : 16;
-        
+
         // 1字节（保留）+ 1字节（地址族）+ 2字节（端口）+ IP地址长度
         return 4 + $ipLength;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         return sprintf('REFLECTED-FROM: %s', IpUtils::formatAddressPort($this->ip, $this->port));

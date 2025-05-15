@@ -20,15 +20,15 @@ class SimpleStunClient extends StunApplication
      * STUN客户端实例
      */
     private ?StunClient $client = null;
-    
+
     /**
      * NAT类型检测器实例
      */
     private ?NatTypeDetector $natDetector = null;
-    
+
     /**
      * 启动STUN客户端应用
-     * 
+     *
      * 由于客户端通常是按需执行，此方法仅初始化客户端，不会进入循环
      *
      * @param bool $daemon 是否以守护进程方式运行
@@ -41,22 +41,22 @@ class SimpleStunClient extends StunApplication
             $this->logWarning("客户端已经在运行");
             return;
         }
-        
+
         $this->logInfo("初始化STUN客户端");
-        
+
         // 创建传输配置
         $transportConfig = new TransportConfig(
             $this->config->get('transport.local_ip'),
             $this->config->get('transport.local_port')
         );
-        
+
         // 设置套接字选项
         $transportConfig->setSocketTimeout($this->config->get('transport.socket_timeout'));
         $transportConfig->setSocketBufferSize($this->config->get('transport.socket_buffer_size'));
-        
+
         // 创建传输实例
         $transport = new UdpTransport($transportConfig, $this->logger);
-        
+
         // 创建STUN客户端
         $this->client = new StunClient(
             $this->config->get('client.server_address'),
@@ -65,7 +65,7 @@ class SimpleStunClient extends StunApplication
             $this->config->get('client.timeout'),
             $this->logger
         );
-        
+
         // 创建NAT类型检测器
         $this->natDetector = new NatTypeDetector(
             $this->config->get('client.server_address'),
@@ -74,11 +74,11 @@ class SimpleStunClient extends StunApplication
             $this->config->get('client.timeout'),
             $this->logger
         );
-        
+
         $this->running = true;
         $this->logInfo("STUN客户端初始化完成");
     }
-    
+
     /**
      * 停止STUN客户端应用
      *
@@ -89,17 +89,17 @@ class SimpleStunClient extends StunApplication
         if (!$this->running) {
             return;
         }
-        
+
         $this->logInfo("停止STUN客户端");
-        
+
         if ($this->client !== null) {
             $this->client->close();
             $this->client = null;
         }
-        
+
         $this->running = false;
     }
-    
+
     /**
      * 获取公网IP地址和端口
      *
@@ -111,25 +111,25 @@ class SimpleStunClient extends StunApplication
         if (!$this->running) {
             $this->start();
         }
-        
+
         if ($this->client === null) {
             throw new StunException("STUN客户端未初始化");
         }
-        
+
         $this->logInfo("正在获取公网地址...");
-        
+
         try {
             $result = $this->client->getMappedAddress();
-            
+
             $this->logInfo("获取公网地址成功: {$result[0]}:{$result[1]}");
-            
+
             return $result;
         } catch (StunException $e) {
             $this->logError("获取公网地址失败: " . $e->getMessage());
             throw $e;
         }
     }
-    
+
     /**
      * 检测NAT类型
      *
@@ -141,25 +141,25 @@ class SimpleStunClient extends StunApplication
         if (!$this->running) {
             $this->start();
         }
-        
+
         if ($this->natDetector === null) {
             throw new StunException("NAT类型检测器未初始化");
         }
-        
+
         $this->logInfo("正在检测NAT类型...");
-        
+
         try {
             $natType = $this->natDetector->detect();
-            
+
             $this->logInfo("NAT类型检测成功: " . $natType->value);
-            
+
             return $natType;
         } catch (StunException $e) {
             $this->logError("NAT类型检测失败: " . $e->getMessage());
             throw $e;
         }
     }
-    
+
     /**
      * 获取NAT信息
      *
@@ -171,14 +171,14 @@ class SimpleStunClient extends StunApplication
         if (!$this->running) {
             $this->start();
         }
-        
+
         try {
             // 获取NAT类型
             $natType = $this->detectNatType();
-            
+
             // 获取公网地址
             $publicAddress = $this->getPublicAddress();
-            
+
             return [
                 'nat_type' => $natType->value,
                 'description' => $natType->getDescription(),
@@ -192,7 +192,7 @@ class SimpleStunClient extends StunApplication
             throw $e;
         }
     }
-    
+
     /**
      * 获取STUN客户端实例
      *
@@ -202,7 +202,7 @@ class SimpleStunClient extends StunApplication
     {
         return $this->client;
     }
-    
+
     /**
      * 获取NAT类型检测器实例
      *
@@ -212,4 +212,4 @@ class SimpleStunClient extends StunApplication
     {
         return $this->natDetector;
     }
-} 
+}

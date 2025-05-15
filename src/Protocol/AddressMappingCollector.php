@@ -363,4 +363,4 @@ class AddressMappingCollector
             $this->logger->log(LogLevel::INFO, "[AddressMappingCollector] $message");
         }
     }
-} 
+}

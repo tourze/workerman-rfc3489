@@ -23,19 +23,32 @@ class TransactionIdGenerator
     /**
      * 生成一个新的随机事务ID
      *
+     * @param int|bool $length 事务ID长度（字节数）或是否确保唯一性
      * @param bool $unique 是否确保唯一性
-     * @return string 16字节的随机事务ID
+     * @return string 随机事务ID
+     * @throws \InvalidArgumentException 如果长度参数无效
      */
-    public static function generate(bool $unique = true): string
+    public static function generate(int|bool $length = Constants::TRANSACTION_ID_LENGTH, bool $unique = true): string
     {
-        $transactionId = random_bytes(Constants::TRANSACTION_ID_LENGTH);
+        // 兼容旧的调用方式，布尔值表示unique
+        if (is_bool($length)) {
+            $unique = $length;
+            $length = Constants::TRANSACTION_ID_LENGTH;
+        }
+        
+        // 检查长度的有效性
+        if ($length <= 0) {
+            throw new \InvalidArgumentException('事务ID长度必须大于0');
+        }
+        
+        $transactionId = random_bytes($length);
 
         if ($unique) {
             $key = bin2hex($transactionId);
 
             // 如果已存在此ID，则重新生成
             while (isset(self::$usedIds[$key])) {
-                $transactionId = random_bytes(Constants::TRANSACTION_ID_LENGTH);
+                $transactionId = random_bytes($length);
                 $key = bin2hex($transactionId);
             }
 
