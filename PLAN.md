@@ -33,31 +33,23 @@
    - ✅ `Transaction.php` - 事务处理类
    - ✅ `TransactionState.php` - 事务状态枚举
 
-4. **应用层 (Application Layer)**
-   - ✅ `StunApplication.php` - 应用基类
-   - ✅ `StunConfig.php` - 应用配置类
-   - ✅ `SimpleStunClient.php` - 简单的STUN客户端应用
-   - ✅ `SimpleStunServer.php` - 简单的STUN服务器应用
-
-5. **辅助工具 (Utilities)**
+4. **辅助工具 (Utilities)**
    - ✅ `BinaryUtils.php` - 二进制数据处理工具
    - ✅ `IpUtils.php` - IP地址工具
    - ✅ `TransactionIdGenerator.php` - 事务ID生成器
    - ✅ `StunLogger.php` - 日志记录接口实现
 
-6. **异常处理**
+5. **异常处理**
    - ✅ `StunException.php` - STUN基础异常类
    - ✅ `MessageFormatException.php` - 消息格式异常
    - ✅ `TransportException.php` - 传输层异常
    - ✅ `TimeoutException.php` - 超时异常
    - ✅ `ProtocolException.php` - 协议逻辑异常
 
-7. **示例实现**
+6. **示例实现**
    - ✅ `nat_type_example.php` - NAT类型检测示例
    - ✅ `get_public_ip.php` - 获取公网IP地址示例
    - ✅ `server_example.php` - STUN服务器示例
-   - ✅ `simple_client_example.php` - 简单STUN客户端应用示例
-   - ✅ `simple_server_example.php` - 简单STUN服务器应用示例
    - ✅ `mapping_collector_example.php` - 地址映射收集器示例
 
 ### 待实现组件 ❌
@@ -113,17 +105,7 @@
   - `NatType.php`: NAT 类型枚举（Full Cone, Restricted Cone, Port Restricted Cone, Symmetric）
   - `Transaction.php`: 事务处理类
 
-### 4. 应用层 (Application Layer)
-
-提供方便的应用接口和具体的应用实现。
-
-- `Application/`: 应用层类
-  - `StunApplication.php`: 应用基类
-  - `SimpleStunClient.php`: 简单的 STUN 客户端应用
-  - `SimpleStunServer.php`: 简单的 STUN 服务器应用
-  - `StunConfig.php`: 应用配置类
-
-### 5. 辅助工具 (Utilities)
+### 4. 辅助工具 (Utilities)
 
 提供各种辅助功能。
 
@@ -133,7 +115,7 @@
   - `TransactionIdGenerator.php`: 事务 ID 生成器
   - `StunLogger.php`: 基于 PSR/Log 的日志记录接口实现
 
-### 6. 异常处理
+### 5. 异常处理
 
 定义各类异常以便更好地处理错误。
 
