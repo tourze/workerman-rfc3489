@@ -21,8 +21,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          extensions: socksts
-          coverage: none
 
       - name: Validate composer.json and composer.lock
         run: composer validate --strict
@@ -39,5 +37,5 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: ComposerRequireChecker
-        uses: docker://webfactory/composer-require-checker:4.5.0
+      - name: Run
+        run: XDEBUG_MODE=off ./vendor/bin/composer-require-checker check composer.json
