@@ -161,7 +161,7 @@ class MappedAddress extends MessageAttribute
             }
             
             return new self($ip, $port);
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
     }
