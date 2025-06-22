@@ -13,7 +13,7 @@ class StunException extends Exception
 {
     /**
      * 创建一个新的STUN异常
-     * 
+     *
      * @param string $message 异常消息
      * @param int $code 异常代码
      * @param \Throwable|null $previous 前一个异常

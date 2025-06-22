@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Tourze\Workerman\RFC3489\Exception\StunException;
 use Tourze\Workerman\RFC3489\Message\Attributes\ChangedAddress;
+use Tourze\Workerman\RFC3489\Message\Attributes\ChangeRequest;
 use Tourze\Workerman\RFC3489\Message\Attributes\MappedAddress;
 use Tourze\Workerman\RFC3489\Message\Attributes\ReflectedFrom;
 use Tourze\Workerman\RFC3489\Message\Attributes\SourceAddress;
@@ -123,7 +124,7 @@ class BindingRequestHandler implements StunMessageHandlerInterface
 
             // 检查是否请求改变IP和端口
             $changeRequest = $request->getAttribute(AttributeType::CHANGE_REQUEST);
-            if ($changeRequest !== null) {
+            if ($changeRequest !== null && $changeRequest instanceof ChangeRequest) {
                 $changeIp = $changeRequest->isChangeIp();
                 $changePort = $changeRequest->isChangePort();
 
@@ -145,7 +146,6 @@ class BindingRequestHandler implements StunMessageHandlerInterface
 
             $this->logInfo("发送Binding响应到 $clientIp:$clientPort");
             return $response;
-
         } catch (StunException $e) {
             $this->logError("处理Binding请求时发生错误: " . $e->getMessage());
             return MessageFactory::createErrorResponse(
@@ -184,18 +184,7 @@ class BindingRequestHandler implements StunMessageHandlerInterface
         return $unknownAttributes;
     }
 
-    /**
-     * 日志记录 - 调试级别
-     *
-     * @param string $message 日志消息
-     * @return void
-     */
-    private function logDebug(string $message): void
-    {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::DEBUG, "[BindingHandler] $message");
-        }
-    }
+
 
     /**
      * 日志记录 - 信息级别

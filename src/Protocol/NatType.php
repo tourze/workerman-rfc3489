@@ -2,25 +2,34 @@
 
 namespace Tourze\Workerman\RFC3489\Protocol;
 
+use Tourze\EnumExtra\Itemable;
+use Tourze\EnumExtra\ItemTrait;
+use Tourze\EnumExtra\Labelable;
+use Tourze\EnumExtra\Selectable;
+use Tourze\EnumExtra\SelectTrait;
+
 /**
  * NAT类型枚举类
  *
  * 定义RFC3489中描述的各种NAT类型
  */
-enum NatType: string
+enum NatType: string implements Itemable, Labelable, Selectable
 {
+    use ItemTrait;
+    use SelectTrait;
+
     /**
      * 未知NAT类型
      */
     case UNKNOWN = 'Unknown';
-    
+
     /**
      * 开放互联网（无NAT）
      *
      * 客户端直接连接到互联网，没有NAT
      */
     case OPEN_INTERNET = 'Open Internet';
-    
+
     /**
      * 完全锥形NAT
      *
@@ -30,7 +39,7 @@ enum NatType: string
      * 将数据包发送到内部主机iAddr:iPort。
      */
     case FULL_CONE = 'Full Cone NAT';
-    
+
     /**
      * 受限锥形NAT
      *
@@ -40,7 +49,7 @@ enum NatType: string
      * 外部主机dAddr:任意端口才能发送数据包到内部主机iAddr:iPort。
      */
     case RESTRICTED_CONE = 'Restricted Cone NAT';
-    
+
     /**
      * 端口受限锥形NAT
      *
@@ -49,7 +58,7 @@ enum NatType: string
      * 外部主机dAddr:dPort才能发送数据包到内部主机iAddr:iPort。
      */
     case PORT_RESTRICTED_CONE = 'Port Restricted Cone NAT';
-    
+
     /**
      * 对称NAT
      *
@@ -58,7 +67,7 @@ enum NatType: string
      * 只有曾经收到过内部主机数据的外部主机，才可以把数据发送回内部主机。
      */
     case SYMMETRIC = 'Symmetric NAT';
-    
+
     /**
      * 对称UDP防火墙
      *
@@ -67,14 +76,14 @@ enum NatType: string
      * 只允许接收发送过数据的目标主机回应的数据包。
      */
     case SYMMETRIC_UDP_FIREWALL = 'Symmetric UDP Firewall';
-    
+
     /**
      * 阻塞UDP
      *
      * 所有UDP数据包被阻塞
      */
     case BLOCKED = 'Blocked';
-    
+
     /**
      * 获取NAT类型的详细描述
      *
@@ -93,7 +102,7 @@ enum NatType: string
             self::BLOCKED => '所有UDP数据包被阻塞，无法进行UDP通信',
         };
     }
-    
+
     /**
      * 检查是否支持P2P通信
      *
@@ -102,13 +111,13 @@ enum NatType: string
     public function isSupportP2P(): bool
     {
         return match ($this) {
-            self::OPEN_INTERNET, self::FULL_CONE, 
+            self::OPEN_INTERNET, self::FULL_CONE,
             self::RESTRICTED_CONE, self::PORT_RESTRICTED_CONE => true,
-            self::SYMMETRIC, self::SYMMETRIC_UDP_FIREWALL, 
+            self::SYMMETRIC, self::SYMMETRIC_UDP_FIREWALL,
             self::BLOCKED, self::UNKNOWN => false,
         };
     }
-    
+
     /**
      * 获取P2P通信建议
      *
@@ -127,4 +136,14 @@ enum NatType: string
             self::UNKNOWN => '建议先尝试直接连接，若失败则使用TURN服务器中继',
         };
     }
-} 
+
+    /**
+     * 获取NAT类型的标签（实现Labelable接口）
+     *
+     * @return string NAT类型标签
+     */
+    public function getLabel(): string
+    {
+        return $this->value;
+    }
+}

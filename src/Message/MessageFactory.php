@@ -66,8 +66,7 @@ class MessageFactory
         string        $transactionId,
         int|ErrorCode $errorCode,
         ?string       $reason = null
-    ): StunMessage
-    {
+    ): StunMessage {
         $messageType = self::createMessageType(MessageMethod::BINDING, MessageClass::ERROR_RESPONSE);
         $message = new StunMessage($messageType, $transactionId);
 
@@ -104,8 +103,7 @@ class MessageFactory
         string $transactionId,
         string $username,
         string $password
-    ): StunMessage
-    {
+    ): StunMessage {
         $messageType = self::createMessageType(MessageMethod::SHARED_SECRET, MessageClass::RESPONSE);
         $message = new StunMessage($messageType, $transactionId);
 
@@ -128,11 +126,10 @@ class MessageFactory
      * @return StunMessage 创建的消息实例
      */
     public static function createSharedSecretErrorResponse(
-        string        $transactionId,
+        string $transactionId,
         int|ErrorCode $errorCode,
-        ?string       $reason = null
-    ): StunMessage
-    {
+        ?string $reason = null
+    ): StunMessage {
         $messageType = self::createMessageType(MessageMethod::SHARED_SECRET, MessageClass::ERROR_RESPONSE);
         $message = new StunMessage($messageType, $transactionId);
 
@@ -152,7 +149,7 @@ class MessageFactory
     public static function createSuccessResponse(StunMessage $request): StunMessage
     {
         $method = $request->getMethod();
-        if (!$method) {
+        if ($method === null) {
             throw new \InvalidArgumentException('无效的请求消息类型');
         }
 
@@ -173,10 +170,9 @@ class MessageFactory
         StunMessage   $request,
         int|ErrorCode $errorCode,
         ?string       $reason = null
-    ): StunMessage
-    {
+    ): StunMessage {
         $method = $request->getMethod();
-        if (!$method) {
+        if ($method === null) {
             throw new \InvalidArgumentException('无效的请求消息类型');
         }
 
@@ -200,8 +196,7 @@ class MessageFactory
     public static function createUnknownAttributesResponse(
         StunMessage $request,
         array       $unknownAttributes
-    ): StunMessage
-    {
+    ): StunMessage {
         $message = self::createErrorResponse($request, ErrorCode::UNKNOWN_ATTRIBUTE);
 
         // 添加未知属性列表
@@ -248,8 +243,7 @@ class MessageFactory
         int         $sourcePort,
         string      $changedIp,
         int         $changedPort
-    ): StunMessage
-    {
+    ): StunMessage {
         $sourceAddr = new SourceAddress($sourceIp, $sourcePort);
         $changedAddr = new ChangedAddress($changedIp, $changedPort);
 

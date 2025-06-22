@@ -205,17 +205,7 @@ class NatTypeDetector
         }
     }
 
-    /**
-     * 记录调试日志
-     *
-     * @param string $message 日志消息
-     */
-    private function logDebug(string $message): void
-    {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::DEBUG, "[NatDetector] $message");
-        }
-    }
+
 
     /**
      * 记录信息日志

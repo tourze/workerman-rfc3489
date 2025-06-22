@@ -12,7 +12,7 @@ use Tourze\Workerman\RFC3489\Message\MessageFactory;
 
 /**
  * STUN测试执行器
- * 
+ *
  * 负责执行NAT类型检测所需的各种测试
  */
 class StunTestExecutor
@@ -30,14 +30,6 @@ class StunTestExecutor
     public function __construct(StunRequestSender $requestSender)
     {
         $this->requestSender = $requestSender;
-    }
-
-    /**
-     * 获取日志记录器
-     */
-    private function getLogger(): ?LoggerInterface
-    {
-        return $this->requestSender->getLogger();
     }
 
     /**
@@ -90,41 +82,46 @@ class StunTestExecutor
      * @return MappedAddress|null 如果成功则返回MappedAddress，否则返回null
      */
     public function performTest1WithChangeRequest(
-        string $serverAddress, 
-        int $serverPort, 
-        bool $changeIp, 
+        string $serverAddress,
+        int $serverPort,
+        bool $changeIp,
         bool $changePort
     ): ?MappedAddress {
         // 创建绑定请求，附带Change Request属性
         $request = MessageFactory::createBindingRequest();
         $changeRequest = new ChangeRequest($changeIp, $changePort);
         $request->addAttribute($changeRequest);
-        
+
         // 构建日志信息
         $changeDesc = [];
         if ($changeIp) $changeDesc[] = "IP";
         if ($changePort) $changeDesc[] = "端口";
         $changeDescStr = !empty($changeDesc) ? implode("和", $changeDesc) : "无";
-        
+
         $this->log('info', "测试I(改变{$changeDescStr}): 向初始服务器发送绑定请求，要求改变{$changeDescStr}");
-        
+
         // 发送请求到初始服务器
         $response = $this->requestSender->sendRequest($request, $serverAddress, $serverPort);
-        
+
         if ($response === null) {
             $this->log('warning', "测试I(改变{$changeDescStr})失败: 未收到响应");
             return null;
         }
-        
+
         // 获取映射地址属性
         $mappedAddress = $response->getAttribute(AttributeType::MAPPED_ADDRESS);
         if ($mappedAddress === null) {
             $this->log('warning', "测试I(改变{$changeDescStr})失败: 响应中没有映射地址");
             return null;
         }
-        
+
+        if (!$mappedAddress instanceof MappedAddress) {
+            $this->log('warning', "测试I(改变{$changeDescStr})失败: 映射地址属性类型错误");
+            return null;
+        }
+
         $this->log('info', "测试I(改变{$changeDescStr})成功，新映射地址: {$mappedAddress->getIp()}:{$mappedAddress->getPort()}");
-        
+
         return $mappedAddress;
     }
 
@@ -139,33 +136,33 @@ class StunTestExecutor
     {
         $changedIp = $changedAddress->getIp();
         $changedPort = $changedAddress->getPort();
-        
+
         // 修复: 如果变更地址IP为0.0.0.0，则使用原始服务器IP，只改变端口
         if ($changedIp === '0.0.0.0') {
             $this->log('warning', "服务器返回的变更IP无效(0.0.0.0)，将使用原始服务器IP");
             $changedIp = $originalServerAddress;
         }
-        
+
         $this->log('info', "测试II: 向变更地址发送绑定请求");
-        
+
         // 创建绑定请求
         $request = MessageFactory::createBindingRequest();
-        
+
         // 发送请求到变更地址
         $response = $this->requestSender->sendRequest($request, $changedIp, $changedPort);
-        
+
         if ($response === null) {
             $this->log('warning', "测试II失败: 未收到响应");
             return false;
         }
-        
+
         // 获取映射地址属性
         $mappedAddress = $response->getAttribute(AttributeType::MAPPED_ADDRESS);
         if ($mappedAddress === null) {
             $this->log('warning', "测试II失败: 响应中没有映射地址");
             return false;
         }
-        
+
         return true;
     }
 

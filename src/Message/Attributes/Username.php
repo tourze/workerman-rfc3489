@@ -53,7 +53,7 @@ class Username extends MessageAttribute
         $this->username = $username;
         return $this;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -61,7 +61,7 @@ class Username extends MessageAttribute
     {
         return $this->username;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -70,7 +70,7 @@ class Username extends MessageAttribute
         if (!is_string($value)) {
             throw new \InvalidArgumentException('Username属性值必须是字符串');
         }
-        
+
         $this->username = $value;
         return $this;
     }
@@ -82,16 +82,16 @@ class Username extends MessageAttribute
     {
         // 用户名最大长度限制为512字节
         $username = substr($this->username, 0, Constants::MAX_USERNAME_LENGTH);
-        
+
         // 编码属性头部和值
         $encoded = $this->encodeAttributeHeader() . $username;
-        
+
         // 添加必要的填充字节
         $padding = $this->getPadding();
         if ($padding > 0) {
             $encoded .= str_repeat("\x00", $padding);
         }
-        
+
         return $encoded;
     }
 
@@ -105,14 +105,14 @@ class Username extends MessageAttribute
         if ($type !== AttributeType::USERNAME->value) {
             throw new \InvalidArgumentException('无法解析USERNAME属性');
         }
-        
+
         // 读取长度
         $valueLength = BinaryUtils::decodeUint16($data, $offset + 2);
-        
+
         // 提取用户名
         $username = substr($data, $offset + 4, $valueLength);
-        
-        return new self($username);
+
+        return new static($username);
     }
 
     /**
@@ -130,8 +130,8 @@ class Username extends MessageAttribute
     public function __toString(): string
     {
         $type = AttributeType::tryFrom($this->getType());
-        $typeName = $type ? $type->name : 'UNKNOWN';
-        
+        $typeName = $type !== null ? $type->name : 'UNKNOWN';
+
         return sprintf(
             '%s (0x%04X): Length=%d, Value=%s',
             $typeName,
@@ -140,20 +140,20 @@ class Username extends MessageAttribute
             $this->username
         );
     }
-    
+
     /**
      * 编码属性头部
-     * 
+     *
      * @return string 属性头部的二进制数据
      */
     protected function encodeAttributeHeader(): string
     {
         return BinaryUtils::encodeUint16($this->getType()) . BinaryUtils::encodeUint16($this->getLength());
     }
-    
+
     /**
      * 获取填充字节数
-     * 
+     *
      * @return int 填充字节数
      */
     protected function getPadding(): int
@@ -162,7 +162,7 @@ class Username extends MessageAttribute
         if ($length % 4 === 0) {
             return 0;
         }
-        
+
         return 4 - ($length % 4);
     }
 }

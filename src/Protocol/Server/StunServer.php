@@ -107,11 +107,11 @@ class StunServer
             $this->logWarning("服务器已经在运行");
             return;
         }
-        
+
         $this->logInfo("启动STUN服务器，监听 {$this->bindIp}:{$this->bindPort}");
-        
+
         $this->running = true;
-        
+
         // 如果使用Workerman
         if (class_exists('Workerman\Worker')) {
             $this->startWithWorkerman($daemon);
@@ -119,7 +119,7 @@ class StunServer
             $this->standaloneAdapter->start();
         }
     }
-    
+
     /**
      * 使用Workerman启动服务器
      *
@@ -129,10 +129,10 @@ class StunServer
     private function startWithWorkerman(bool $daemon = false): void
     {
         $this->logInfo("使用Workerman启动STUN服务器");
-        
+
         // 确保传输层关闭，避免端口冲突
         $this->transport->close();
-        
+
         // 如果Workerman适配器尚未创建，则创建它
         if ($this->workermanAdapter === null) {
             $this->workermanAdapter = new StunServerWorkermanAdapter(
@@ -142,7 +142,7 @@ class StunServer
                 $this->logger
             );
         }
-        
+
         // 启动Workerman适配器
         $this->workermanAdapter->start($daemon);
     }
@@ -198,6 +198,26 @@ class StunServer
     public function getTransport(): StunTransport
     {
         return $this->transport;
+    }
+
+    /**
+     * 获取备用IP地址
+     *
+     * @return string 备用IP地址
+     */
+    public function getAlternateIp(): string
+    {
+        return $this->alternateIp;
+    }
+
+    /**
+     * 获取备用端口
+     *
+     * @return int 备用端口
+     */
+    public function getAlternatePort(): int
+    {
+        return $this->alternatePort;
     }
 
     /**

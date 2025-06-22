@@ -93,7 +93,7 @@ class ReflectedFrom extends MessageAttribute
             throw new \InvalidArgumentException('无法解析REFLECTED-FROM属性');
         }
 
-        return new self($ip, $port);
+        return new static($ip, $port);
     }
 
     /**

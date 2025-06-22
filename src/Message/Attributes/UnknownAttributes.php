@@ -16,7 +16,7 @@ class UnknownAttributes extends MessageAttribute
 {
     /**
      * 未知属性类型列表
-     * 
+     *
      * @var int[]
      */
     private array $attributes = [];
@@ -53,7 +53,7 @@ class UnknownAttributes extends MessageAttribute
         if (!in_array($attribute, $this->attributes, true)) {
             $this->attributes[] = $attribute;
         }
-        
+
         return $this;
     }
 
@@ -63,11 +63,11 @@ class UnknownAttributes extends MessageAttribute
     public function encode(): string
     {
         $result = '';
-        
+
         foreach ($this->attributes as $attribute) {
             $result .= pack('n', $attribute);
         }
-        
+
         return $result;
     }
 
@@ -79,19 +79,19 @@ class UnknownAttributes extends MessageAttribute
         if ($length % 2 !== 0) {
             throw new \InvalidArgumentException('UNKNOWN-ATTRIBUTES属性长度必须是2的倍数');
         }
-        
+
         $count = $length / 2;
         $attributes = [];
-        
+
         for ($i = 0; $i < $count; $i++) {
             $attrValue = unpack('n', substr($data, $offset + $i * 2, 2));
-            
+
             if ($attrValue) {
                 $attributes[] = $attrValue[1];
             }
         }
-        
-        return new self($attributes);
+
+        return new static($attributes);
     }
 
     /**
@@ -109,15 +109,15 @@ class UnknownAttributes extends MessageAttribute
     public function __toString(): string
     {
         $attributeStrings = [];
-        
+
         foreach ($this->attributes as $attribute) {
             $hexValue = sprintf('0x%04X', $attribute);
             $attrType = AttributeType::tryFrom($attribute);
-            $name = $attrType ? $attrType->getName() : '未知';
-            
+            $name = $attrType !== null ? $attrType->getName() : '未知';
+
             $attributeStrings[] = "$hexValue ($name)";
         }
-        
+
         return sprintf('UNKNOWN-ATTRIBUTES: %s', implode(', ', $attributeStrings));
     }
 }

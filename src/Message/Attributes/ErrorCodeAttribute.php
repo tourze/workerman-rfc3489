@@ -34,7 +34,7 @@ class ErrorCodeAttribute extends MessageAttribute
     public function __construct(int|ErrorCode $code, ?string $reason = null)
     {
         parent::__construct(AttributeType::ERROR_CODE);
-        
+
         if ($code instanceof ErrorCode) {
             $this->code = $code->value;
             $this->reason = $reason ?? $code->getDefaultReason();
@@ -82,7 +82,7 @@ class ErrorCodeAttribute extends MessageAttribute
             $errorCodeEnum = ErrorCode::tryFrom($code);
             $this->reason = $reason ?? ($errorCodeEnum?->getDefaultReason() ?? 'Unknown Error');
         }
-        
+
         return $this;
     }
 
@@ -105,15 +105,15 @@ class ErrorCodeAttribute extends MessageAttribute
     {
         $class = intdiv($this->code, 100);
         $number = $this->code % 100;
-        
+
         // 前两个字节为保留字段，必须为0
         // 第三个字节高3位为错误类，低5位为0
         // 第四个字节为错误号
         $header = pack('CCn', 0, 0, ($class << 5) | $number);
-        
+
         // 原因短语使用UTF-8编码
         $reasonBytes = substr($this->reason, 0, 763); // 最大长度限制为763（767 - 4字节头部）
-        
+
         return $header . $reasonBytes;
     }
 
@@ -125,29 +125,29 @@ class ErrorCodeAttribute extends MessageAttribute
         if ($length < 4) {
             throw new \InvalidArgumentException('ERROR-CODE属性长度不足');
         }
-        
+
         // 解析错误代码
         $errorClassAndNumber = unpack('x2C1class/C1number', substr($data, $offset, 4));
-        
+
         if (!$errorClassAndNumber) {
             throw new \InvalidArgumentException('无法解析ERROR-CODE属性');
         }
-        
+
         // 确保数组键存在，避免Undefined array key警告
         $classValue = $errorClassAndNumber['class'] ?? 0;
         $numberValue = $errorClassAndNumber['number'] ?? 0;
-        
+
         $class = ($classValue >> 5) & 0x07;
         $number = $numberValue;
         $code = $class * 100 + $number;
-        
+
         // 解析原因短语
         $reason = '';
         if ($length > 4) {
             $reason = substr($data, $offset + 4, $length - 4);
         }
-        
-        return new self($code, $reason);
+
+        return new static($code, $reason);
     }
 
     /**
@@ -166,4 +166,4 @@ class ErrorCodeAttribute extends MessageAttribute
     {
         return sprintf('ERROR-CODE: %d %s', $this->code, $this->reason);
     }
-} 
+}

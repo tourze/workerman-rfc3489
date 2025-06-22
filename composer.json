@@ -9,6 +9,7 @@
     "ext-sockets": "*",
     "psr/log": "^3|^2|^1",
     "symfony/yaml": "^6.4 || ^7.1",
+    "tourze/enum-extra": "0.1.*",
     "workerman/workerman": "^5.1"
   },
   "require-dev": {

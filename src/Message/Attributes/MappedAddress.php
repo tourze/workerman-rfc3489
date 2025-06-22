@@ -54,7 +54,7 @@ class MappedAddress extends MessageAttribute
     {
         return $this->ip;
     }
-    
+
     /**
      * 设置IP地址
      *
@@ -77,7 +77,7 @@ class MappedAddress extends MessageAttribute
     {
         return $this->port;
     }
-    
+
     /**
      * 设置端口号
      *
@@ -107,7 +107,7 @@ class MappedAddress extends MessageAttribute
     {
         return IpUtils::encodeAddress($this->ip, $this->port);
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -116,17 +116,17 @@ class MappedAddress extends MessageAttribute
         if (!is_string($value)) {
             throw new \InvalidArgumentException('MappedAddress属性值必须是字符串');
         }
-        
+
         [$ip, $port] = IpUtils::decodeAddress($value, 0);
-        
+
         if ($ip === null) {
             throw new \InvalidArgumentException('无法解析地址值');
         }
-        
+
         $this->ip = $ip;
         $this->port = $port;
         $this->family = IpUtils::getAddressFamily($ip);
-        
+
         return $this;
     }
 
@@ -149,18 +149,18 @@ class MappedAddress extends MessageAttribute
         if ($type !== AttributeType::MAPPED_ADDRESS->value) {
             throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
-        
+
         // 跳过属性头部(4字节)
         $valueOffset = $offset + 4;
-        
+
         try {
             [$ip, $port] = IpUtils::decodeAddress($data, $valueOffset);
-            
+
             if ($ip === null) {
                 throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
             }
-            
-            return new self($ip, $port);
+
+            return new static($ip, $port);
         } catch (\Throwable $e) {
             throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
@@ -173,7 +173,7 @@ class MappedAddress extends MessageAttribute
     {
         // 地址族是IPv4还是IPv6，长度不同
         $ipLength = $this->family === IpUtils::IPV4 ? 4 : 16;
-        
+
         // 1字节（保留）+ 1字节（地址族）+ 2字节（端口）+ IP地址长度
         return 4 + $ipLength;
     }
@@ -184,8 +184,8 @@ class MappedAddress extends MessageAttribute
     public function __toString(): string
     {
         $type = AttributeType::tryFrom($this->getType());
-        $typeName = $type ? $type->name : 'UNKNOWN';
-        
+        $typeName = $type !== null ? $type->name : 'UNKNOWN';
+
         return sprintf(
             '%s (0x%04X): %s',
             $typeName,
@@ -193,20 +193,20 @@ class MappedAddress extends MessageAttribute
             IpUtils::formatAddressPort($this->ip, $this->port)
         );
     }
-    
+
     /**
      * 编码属性头部
-     * 
+     *
      * @return string 属性头部的二进制数据
      */
     protected function encodeAttributeHeader(): string
     {
         return BinaryUtils::encodeUint16($this->getType()) . BinaryUtils::encodeUint16($this->getLength());
     }
-    
+
     /**
      * 获取填充字节数
-     * 
+     *
      * @return int 填充字节数
      */
     protected function getPadding(): int
@@ -215,7 +215,7 @@ class MappedAddress extends MessageAttribute
         if ($length % 4 === 0) {
             return 0;
         }
-        
+
         return 4 - ($length % 4);
     }
 }

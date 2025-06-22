@@ -246,11 +246,11 @@ class StunMessage
 
             // 解析属性头部
             $attrHeader = unpack('ntype/nlength', substr($data, $offset, 4));
-            
+
             if (!$attrHeader) {
                 throw new MessageFormatException('无法解析属性头部');
             }
-            
+
             $attrType = $attrHeader['type'];
             $attrLength = $attrHeader['length'];
 
@@ -261,10 +261,10 @@ class StunMessage
             // 创建对应类型的属性实例
             try {
                 $attributeType = AttributeType::tryFrom($attrType);
-                if ($attributeType) {
+                if ($attributeType !== null) {
                     // 注意：这里传递的offset要包含属性头部
                     $attribute = self::createAttributeFromType($attrType, $data, $offset, $attrLength);
-                    if ($attribute) {
+                    if ($attribute !== null) {
                         $message->addAttribute($attribute);
                     }
                 }
@@ -273,7 +273,7 @@ class StunMessage
             }
 
             // 移动到下一个属性，考虑4字节对齐
-            $padding = ($attrLength % 4) ? 4 - ($attrLength % 4) : 0;
+            $padding = ($attrLength % 4) !== 0 ? 4 - ($attrLength % 4) : 0;
             $offset += 4 + $attrLength + $padding;
         }
 
@@ -293,7 +293,7 @@ class StunMessage
         foreach ($this->attributes as $attribute) {
             $encoded = $attribute->encode();
             $attrLength = strlen($encoded);
-            
+
             // 添加属性头部(类型+长度)
             $attributes .= pack('nn', $attribute->getType(), $attrLength);
             $attributes .= $encoded;
@@ -387,9 +387,9 @@ class StunMessage
     {
         $method = $this->getMethod();
         $class = $this->getClass();
-        
-        $methodName = $method ? $method->name : 'UNKNOWN';
-        $className = $class ? $class->name : 'UNKNOWN';
+
+        $methodName = $method !== null ? $method->name : 'UNKNOWN';
+        $className = $class !== null ? $class->name : 'UNKNOWN';
         $transactionId = bin2hex($this->transactionId);
 
         $result = "STUN $methodName $className (transaction-id: $transactionId)\n";

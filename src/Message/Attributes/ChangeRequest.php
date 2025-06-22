@@ -97,15 +97,15 @@ class ChangeRequest extends MessageAttribute
     public function encode(): string
     {
         $flags = 0;
-        
+
         if ($this->changeIp) {
             $flags |= self::CHANGE_IP;
         }
-        
+
         if ($this->changePort) {
             $flags |= self::CHANGE_PORT;
         }
-        
+
         return "\x00\x00\x00" . chr($flags);
     }
 
@@ -117,13 +117,13 @@ class ChangeRequest extends MessageAttribute
         if ($length < 4) {
             throw new \InvalidArgumentException('CHANGE-REQUEST属性长度不足');
         }
-        
+
         $flags = ord($data[$offset + 3]);
-        
+
         $changeIp = ($flags & self::CHANGE_IP) !== 0;
         $changePort = ($flags & self::CHANGE_PORT) !== 0;
-        
-        return new self($changeIp, $changePort);
+
+        return new static($changeIp, $changePort);
     }
 
     /**
@@ -140,15 +140,15 @@ class ChangeRequest extends MessageAttribute
     public function __toString(): string
     {
         $changes = [];
-        
+
         if ($this->changeIp) {
             $changes[] = 'IP';
         }
-        
+
         if ($this->changePort) {
             $changes[] = 'Port';
         }
-        
+
         return sprintf('CHANGE-REQUEST: %s', empty($changes) ? 'None' : implode(', ', $changes));
     }
 }

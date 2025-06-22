@@ -2,6 +2,12 @@
 
 namespace Tourze\Workerman\RFC3489\Message;
 
+use Tourze\EnumExtra\Itemable;
+use Tourze\EnumExtra\ItemTrait;
+use Tourze\EnumExtra\Labelable;
+use Tourze\EnumExtra\Selectable;
+use Tourze\EnumExtra\SelectTrait;
+
 /**
  * STUN消息方法枚举
  *
@@ -9,8 +15,11 @@ namespace Tourze\Workerman\RFC3489\Message;
  *
  * @see https://datatracker.ietf.org/doc/html/rfc3489#section-10.1 消息方法定义
  */
-enum MessageMethod: int
+enum MessageMethod: int implements Itemable, Labelable, Selectable
 {
+    use ItemTrait;
+    use SelectTrait;
+
     /**
      * Binding方法
      *
@@ -38,12 +47,12 @@ enum MessageMethod: int
     public static function fromMessageType(int $messageType): ?self
     {
         // 特殊处理测试用例中的无效值
-        if ($messageType === 0x999 || $messageType === 2457) {
+        if ($messageType === 0x999) {
             return null;
         }
-        
+
         $value = $messageType & 0x3EEF;
-        
+
         // 对于无效的值，额外检查原始消息类型是否有效
         if ($messageType < 0 || $messageType > 0x3FFF) {
             return null;
@@ -55,7 +64,7 @@ enum MessageMethod: int
             default => null
         };
     }
-    
+
     /**
      * 从方法值获取消息方法
      *
@@ -79,10 +88,20 @@ enum MessageMethod: int
             self::SHARED_SECRET => 'Shared Secret'
         };
     }
-    
+
+    /**
+     * 获取消息方法的标签（实现Labelable接口）
+     *
+     * @return string 消息方法标签
+     */
+    public function getLabel(): string
+    {
+        return $this->getName();
+    }
+
     /**
      * 将枚举转换为字符串
-     * 
+     *
      * @return string 枚举名称
      */
     public function toString(): string

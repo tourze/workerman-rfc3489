@@ -110,7 +110,7 @@ class MessageIntegrity extends MessageAttribute
 
         $hmac = substr($data, $offset, Constants::MESSAGE_INTEGRITY_LENGTH);
 
-        return new self($hmac);
+        return new static($hmac);
     }
 
     public function getLength(): int

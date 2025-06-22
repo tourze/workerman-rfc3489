@@ -70,7 +70,7 @@ class Transaction
     
     /**
      * 事务回调函数
-     * 
+     *
      * @var callable|null
      */
     private $callback = null;
