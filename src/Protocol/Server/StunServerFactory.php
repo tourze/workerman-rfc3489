@@ -44,7 +44,7 @@ class StunServerFactory
         $messageRouter = new StunMessageRouter($logger);
 
         // 创建请求处理器
-        $alternatePort = $alternatePort ?: ($bindPort + 1);
+        $alternatePort = $alternatePort !== 0 ? $alternatePort : ($bindPort + 1);
         $bindingHandler = new BindingRequestHandler($transport, $alternateIp, $alternatePort, $authHandler, $logger);
         $sharedSecretHandler = new SharedSecretRequestHandler($logger);
 

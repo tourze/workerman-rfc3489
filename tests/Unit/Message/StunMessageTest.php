@@ -116,8 +116,8 @@ class StunMessageTest extends TestCase
         $attributes = $message->getAttributes();
         $this->assertCount(1, $attributes);
         $this->assertArrayHasKey(0, $attributes);
-        $firstAttribute = $attributes[0] ?? null;
-        $this->assertSame($username, $firstAttribute);
+        /** @phpstan-ignore-next-line */
+        $this->assertSame($username, $attributes[0]);
 
         // 添加第二个属性
         $mappedAddress = new MappedAddress('192.168.1.1', 8080);
@@ -127,10 +127,10 @@ class StunMessageTest extends TestCase
         $this->assertCount(2, $attributes);
         $this->assertArrayHasKey(0, $attributes);
         $this->assertArrayHasKey(1, $attributes);
-        $firstAttribute = $attributes[0] ?? null;
-        $secondAttribute = $attributes[1] ?? null;
-        $this->assertSame($username, $firstAttribute);
-        $this->assertSame($mappedAddress, $secondAttribute);
+        /** @phpstan-ignore-next-line */
+        $this->assertSame($username, $attributes[0]);
+        /** @phpstan-ignore-next-line */
+        $this->assertSame($mappedAddress, $attributes[1]);
     }
 
     public function testGetAttributeByType()

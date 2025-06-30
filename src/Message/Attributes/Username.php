@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\Constants;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
@@ -68,7 +69,7 @@ class Username extends MessageAttribute
     public function setValue(mixed $value): MessageAttribute
     {
         if (!is_string($value)) {
-            throw new \InvalidArgumentException('Username属性值必须是字符串');
+            throw new InvalidArgumentException('Username属性值必须是字符串');
         }
 
         $this->username = $value;
@@ -103,7 +104,7 @@ class Username extends MessageAttribute
         // 检查类型是否匹配
         $type = BinaryUtils::decodeUint16($data, $offset);
         if ($type !== AttributeType::USERNAME->value) {
-            throw new \InvalidArgumentException('无法解析USERNAME属性');
+            throw new InvalidArgumentException('无法解析USERNAME属性');
         }
 
         // 读取长度

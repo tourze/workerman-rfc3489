@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
 
@@ -115,7 +116,7 @@ class ChangeRequest extends MessageAttribute
     public static function decode(string $data, int $offset, int $length): static
     {
         if ($length < 4) {
-            throw new \InvalidArgumentException('CHANGE-REQUEST属性长度不足');
+            throw new InvalidArgumentException('CHANGE-REQUEST属性长度不足');
         }
 
         $flags = ord($data[$offset + 3]);

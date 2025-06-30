@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\ErrorCode;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
@@ -123,14 +124,14 @@ class ErrorCodeAttribute extends MessageAttribute
     public static function decode(string $data, int $offset, int $length): static
     {
         if ($length < 4) {
-            throw new \InvalidArgumentException('ERROR-CODE属性长度不足');
+            throw new InvalidArgumentException('ERROR-CODE属性长度不足');
         }
 
         // 解析错误代码
         $errorClassAndNumber = unpack('x2C1class/C1number', substr($data, $offset, 4));
 
         if (!$errorClassAndNumber) {
-            throw new \InvalidArgumentException('无法解析ERROR-CODE属性');
+            throw new InvalidArgumentException('无法解析ERROR-CODE属性');
         }
 
         // 确保数组键存在，避免Undefined array key警告

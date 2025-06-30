@@ -3,6 +3,7 @@
 namespace Tourze\Workerman\RFC3489\Utils;
 
 use Tourze\Workerman\RFC3489\Message\Constants;
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 
 /**
  * STUN事务ID生成器
@@ -26,7 +27,7 @@ class TransactionIdGenerator
      * @param int|bool $length 事务ID长度（字节数）或是否确保唯一性
      * @param bool $unique 是否确保唯一性
      * @return string 随机事务ID
-     * @throws \InvalidArgumentException 如果长度参数无效
+     * @throws InvalidArgumentException 如果长度参数无效
      */
     public static function generate(int|bool $length = Constants::TRANSACTION_ID_LENGTH, bool $unique = true): string
     {
@@ -38,7 +39,7 @@ class TransactionIdGenerator
         
         // 检查长度的有效性
         if ($length <= 0) {
-            throw new \InvalidArgumentException('事务ID长度必须大于0');
+            throw new InvalidArgumentException('事务ID长度必须大于0');
         }
         
         $transactionId = random_bytes($length);

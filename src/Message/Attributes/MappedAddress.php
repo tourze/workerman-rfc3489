@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
 use Tourze\Workerman\RFC3489\Utils\BinaryUtils;
@@ -114,13 +115,13 @@ class MappedAddress extends MessageAttribute
     public function setValue(mixed $value): MessageAttribute
     {
         if (!is_string($value)) {
-            throw new \InvalidArgumentException('MappedAddress属性值必须是字符串');
+            throw new InvalidArgumentException('MappedAddress属性值必须是字符串');
         }
 
         [$ip, $port] = IpUtils::decodeAddress($value, 0);
 
         if ($ip === null) {
-            throw new \InvalidArgumentException('无法解析地址值');
+            throw new InvalidArgumentException('无法解析地址值');
         }
 
         $this->ip = $ip;
@@ -147,7 +148,7 @@ class MappedAddress extends MessageAttribute
         // 检查类型是否匹配
         $type = BinaryUtils::decodeUint16($data, $offset);
         if ($type !== AttributeType::MAPPED_ADDRESS->value) {
-            throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
+            throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
 
         // 跳过属性头部(4字节)
@@ -157,12 +158,12 @@ class MappedAddress extends MessageAttribute
             [$ip, $port] = IpUtils::decodeAddress($data, $valueOffset);
 
             if ($ip === null) {
-                throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
+                throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
             }
 
             return new static($ip, $port);
         } catch (\Throwable $e) {
-            throw new \InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
+            throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
     }
 

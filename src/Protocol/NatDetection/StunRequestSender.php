@@ -146,7 +146,10 @@ class StunRequestSender
             // 使用解析后的IP地址进行比较，或者如果响应IP在解析结果中也接受
             if (!filter_var($destIp, FILTER_VALIDATE_IP)) {
                 // 如果原始目标是域名，尝试获取所有可能的IP
-                $allIps = gethostbynamel($destIp) ?: [];
+                $allIps = gethostbynamel($destIp);
+                if ($allIps === false) {
+                    $allIps = [];
+                }
                 if (in_array($responseIp, $allIps, true)) {
                     // 响应来自域名解析的其中一个IP，接受它
                     $this->log('debug', "接受来自 $responseIp 的响应，它是 $destIp 域名的解析结果之一");

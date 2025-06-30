@@ -83,7 +83,7 @@ class UsernameTest extends TestCase
         
         // 解码
         $offset = 0;
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Tourze\Workerman\RFC3489\Exception\InvalidArgumentException::class);
         Username::decode($data, $offset, 8);
     }
     

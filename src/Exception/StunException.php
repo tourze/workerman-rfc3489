@@ -6,7 +6,7 @@ use Exception;
 
 /**
  * STUN异常基类
- * 
+ *
  * 所有STUN相关异常的基类，提供基本异常功能
  */
 class StunException extends Exception

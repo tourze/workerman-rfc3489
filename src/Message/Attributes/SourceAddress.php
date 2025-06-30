@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
 use Tourze\Workerman\RFC3489\Utils\IpUtils;
@@ -90,7 +91,7 @@ class SourceAddress extends MessageAttribute
         [$ip, $port] = IpUtils::decodeAddress($data, $offset);
 
         if ($ip === null) {
-            throw new \InvalidArgumentException('无法解析SOURCE-ADDRESS属性');
+            throw new InvalidArgumentException('无法解析SOURCE-ADDRESS属性');
         }
 
         return new static($ip, $port);

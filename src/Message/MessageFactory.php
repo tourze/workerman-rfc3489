@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\Attributes\ChangedAddress;
 use Tourze\Workerman\RFC3489\Message\Attributes\ErrorCodeAttribute;
 use Tourze\Workerman\RFC3489\Message\Attributes\MappedAddress;
@@ -150,7 +151,7 @@ class MessageFactory
     {
         $method = $request->getMethod();
         if ($method === null) {
-            throw new \InvalidArgumentException('无效的请求消息类型');
+            throw new InvalidArgumentException('无效的请求消息类型');
         }
 
         $messageType = self::createMessageType($method, MessageClass::RESPONSE);
@@ -173,7 +174,7 @@ class MessageFactory
     ): StunMessage {
         $method = $request->getMethod();
         if ($method === null) {
-            throw new \InvalidArgumentException('无效的请求消息类型');
+            throw new InvalidArgumentException('无效的请求消息类型');
         }
 
         $messageType = self::createMessageType($method, MessageClass::ERROR_RESPONSE);

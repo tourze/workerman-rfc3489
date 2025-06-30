@@ -4,9 +4,9 @@ namespace Tourze\Workerman\RFC3489\Message;
 
 /**
  * STUN消息属性基类
- * 
+ *
  * 所有STUN消息属性的抽象基类，定义了属性的基本结构和方法
- * 
+ *
  * @see https://datatracker.ietf.org/doc/html/rfc3489#section-11.1 属性格式定义
  */
 abstract class MessageAttribute

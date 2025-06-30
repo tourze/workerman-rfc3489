@@ -3,6 +3,7 @@
 namespace Tourze\Workerman\RFC3489\Tests\Unit\Transport;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Transport\TransportConfig;
 
 class TransportConfigTest extends TestCase
@@ -84,7 +85,7 @@ class TransportConfigTest extends TestCase
     {
         $config = new TransportConfig();
         
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $config->setBufferSize(-1); // 负值应该抛出异常
     }
     
@@ -111,7 +112,7 @@ class TransportConfigTest extends TestCase
     {
         $config = new TransportConfig();
         
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $config->setSendTimeout(-1); // 负值应该抛出异常
     }
     
@@ -138,7 +139,7 @@ class TransportConfigTest extends TestCase
     {
         $config = new TransportConfig();
         
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $config->setReceiveTimeout(-1); // 负值应该抛出异常
     }
     
@@ -165,7 +166,7 @@ class TransportConfigTest extends TestCase
     {
         $config = new TransportConfig();
         
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $config->setRetryCount(-1); // 负值应该抛出异常
     }
     
@@ -192,7 +193,7 @@ class TransportConfigTest extends TestCase
     {
         $config = new TransportConfig();
         
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $config->setRetryInterval(-1); // 负值应该抛出异常
     }
     

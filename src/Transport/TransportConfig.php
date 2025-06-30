@@ -2,6 +2,8 @@
 
 namespace Tourze\Workerman\RFC3489\Transport;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
+
 /**
  * 传输配置类
  *
@@ -114,12 +116,12 @@ class TransportConfig
      *
      * @param int $sendTimeout 发送超时（毫秒）
      * @return self 当前实例，用于链式调用
-     * @throws \InvalidArgumentException 如果超时值无效
+     * @throws InvalidArgumentException 如果超时值无效
      */
     public function setSendTimeout(int $sendTimeout): self
     {
         if ($sendTimeout < 0) {
-            throw new \InvalidArgumentException('发送超时不能为负数');
+            throw new InvalidArgumentException('发送超时不能为负数');
         }
         
         $this->sendTimeout = $sendTimeout;
@@ -141,12 +143,12 @@ class TransportConfig
      *
      * @param int $receiveTimeout 接收超时（毫秒）
      * @return self 当前实例，用于链式调用
-     * @throws \InvalidArgumentException 如果超时值无效
+     * @throws InvalidArgumentException 如果超时值无效
      */
     public function setReceiveTimeout(int $receiveTimeout): self
     {
         if ($receiveTimeout < 0) {
-            throw new \InvalidArgumentException('接收超时不能为负数');
+            throw new InvalidArgumentException('接收超时不能为负数');
         }
         
         $this->receiveTimeout = $receiveTimeout;
@@ -168,12 +170,12 @@ class TransportConfig
      *
      * @param int $retryCount 重试次数
      * @return self 当前实例，用于链式调用
-     * @throws \InvalidArgumentException 如果重试次数无效
+     * @throws InvalidArgumentException 如果重试次数无效
      */
     public function setRetryCount(int $retryCount): self
     {
         if ($retryCount < 0) {
-            throw new \InvalidArgumentException('重试次数不能为负数');
+            throw new InvalidArgumentException('重试次数不能为负数');
         }
         
         $this->retryCount = $retryCount;
@@ -195,12 +197,12 @@ class TransportConfig
      *
      * @param int $retryInterval 重试间隔（毫秒）
      * @return self 当前实例，用于链式调用
-     * @throws \InvalidArgumentException 如果重试间隔无效
+     * @throws InvalidArgumentException 如果重试间隔无效
      */
     public function setRetryInterval(int $retryInterval): self
     {
         if ($retryInterval < 0) {
-            throw new \InvalidArgumentException('重试间隔不能为负数');
+            throw new InvalidArgumentException('重试间隔不能为负数');
         }
         
         $this->retryInterval = $retryInterval;
@@ -222,12 +224,12 @@ class TransportConfig
      *
      * @param int $bufferSize 缓冲区大小
      * @return self 当前实例，用于链式调用
-     * @throws \InvalidArgumentException 如果缓冲区大小无效
+     * @throws InvalidArgumentException 如果缓冲区大小无效
      */
     public function setBufferSize(int $bufferSize): self
     {
         if ($bufferSize < 0) {
-            throw new \InvalidArgumentException('缓冲区大小不能为负数');
+            throw new InvalidArgumentException('缓冲区大小不能为负数');
         }
         
         $this->bufferSize = $bufferSize;

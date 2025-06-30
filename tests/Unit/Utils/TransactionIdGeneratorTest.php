@@ -3,6 +3,7 @@
 namespace Tourze\Workerman\RFC3489\Tests\Unit\Utils;
 
 use PHPUnit\Framework\TestCase;
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Utils\TransactionIdGenerator;
 
 class TransactionIdGeneratorTest extends TestCase
@@ -55,7 +56,7 @@ class TransactionIdGeneratorTest extends TestCase
         $invalidLength = -1;
         
         // 设置期望抛出异常
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         
         // 尝试生成负长度的事务ID，应该抛出异常
         TransactionIdGenerator::generate($invalidLength);

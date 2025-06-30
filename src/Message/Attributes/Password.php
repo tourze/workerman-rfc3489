@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\Constants;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
@@ -73,7 +74,7 @@ class Password extends MessageAttribute
     public function setValue(mixed $value): MessageAttribute
     {
         if (!is_string($value)) {
-            throw new \InvalidArgumentException('Password属性值必须是字符串');
+            throw new InvalidArgumentException('Password属性值必须是字符串');
         }
 
         $this->password = $value;
@@ -108,7 +109,7 @@ class Password extends MessageAttribute
         // 检查类型是否匹配
         $type = unpack('n', substr($data, $offset, 2))[1];
         if ($type !== AttributeType::PASSWORD->value) {
-            throw new \InvalidArgumentException('无法解析PASSWORD属性');
+            throw new InvalidArgumentException('无法解析PASSWORD属性');
         }
 
         // 读取长度

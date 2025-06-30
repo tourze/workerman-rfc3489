@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
 
@@ -77,7 +78,7 @@ class UnknownAttributes extends MessageAttribute
     public static function decode(string $data, int $offset, int $length): static
     {
         if ($length % 2 !== 0) {
-            throw new \InvalidArgumentException('UNKNOWN-ATTRIBUTES属性长度必须是2的倍数');
+            throw new InvalidArgumentException('UNKNOWN-ATTRIBUTES属性长度必须是2的倍数');
         }
 
         $count = $length / 2;

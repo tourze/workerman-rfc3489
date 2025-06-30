@@ -10,9 +10,9 @@ use Tourze\EnumExtra\SelectTrait;
 
 /**
  * STUN消息属性类型枚举
- * 
+ *
  * 定义了RFC3489中的STUN消息属性类型
- * 
+ *
  * @see https://datatracker.ietf.org/doc/html/rfc3489#section-11.2 属性定义
  */
 enum AttributeType: int implements Itemable, Labelable, Selectable

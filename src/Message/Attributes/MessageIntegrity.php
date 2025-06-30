@@ -2,6 +2,7 @@
 
 namespace Tourze\Workerman\RFC3489\Message\Attributes;
 
+use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
 use Tourze\Workerman\RFC3489\Message\AttributeType;
 use Tourze\Workerman\RFC3489\Message\Constants;
 use Tourze\Workerman\RFC3489\Message\MessageAttribute;
@@ -105,7 +106,7 @@ class MessageIntegrity extends MessageAttribute
     public static function decode(string $data, int $offset, int $length): static
     {
         if ($length !== Constants::MESSAGE_INTEGRITY_LENGTH) {
-            throw new \InvalidArgumentException('MESSAGE-INTEGRITY属性长度必须是20字节');
+            throw new InvalidArgumentException('MESSAGE-INTEGRITY属性长度必须是20字节');
         }
 
         $hmac = substr($data, $offset, Constants::MESSAGE_INTEGRITY_LENGTH);

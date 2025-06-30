@@ -4,9 +4,9 @@ namespace Tourze\Workerman\RFC3489\Message;
 
 /**
  * STUN协议常量定义
- * 
+ *
  * 此类包含RFC3489协议中定义的所有常量值，包括魔术字节、消息类型等
- * 
+ *
  * @see https://datatracker.ietf.org/doc/html/rfc3489#section-7 消息格式定义
  * @see https://datatracker.ietf.org/doc/html/rfc3489#section-11.1 属性类型定义
  */
