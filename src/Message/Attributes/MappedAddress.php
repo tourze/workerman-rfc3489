@@ -35,8 +35,8 @@ class MappedAddress extends MessageAttribute
     /**
      * 创建一个新的MAPPED-ADDRESS属性
      *
-     * @param string $ip IP地址
-     * @param int $port 端口号
+     * @param string $ip   IP地址
+     * @param int    $port 端口号
      */
     public function __construct(string $ip, int $port)
     {
@@ -60,13 +60,11 @@ class MappedAddress extends MessageAttribute
      * 设置IP地址
      *
      * @param string $ip IP地址
-     * @return self 当前实例
      */
-    public function setIp(string $ip): self
+    public function setIp(string $ip): void
     {
         $this->ip = $ip;
         $this->family = IpUtils::getAddressFamily($ip);
-        return $this;
     }
 
     /**
@@ -83,12 +81,10 @@ class MappedAddress extends MessageAttribute
      * 设置端口号
      *
      * @param int $port 端口号
-     * @return self 当前实例
      */
-    public function setPort(int $port): self
+    public function setPort(int $port): void
     {
         $this->port = $port;
-        return $this;
     }
 
     /**
@@ -101,18 +97,12 @@ class MappedAddress extends MessageAttribute
         return $this->family;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getValue(): string
     {
         return IpUtils::encodeAddress($this->ip, $this->port);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setValue(mixed $value): MessageAttribute
+    public function setValue(mixed $value): void
     {
         if (!is_string($value)) {
             throw new InvalidArgumentException('MappedAddress属性值必须是字符串');
@@ -120,29 +110,21 @@ class MappedAddress extends MessageAttribute
 
         [$ip, $port] = IpUtils::decodeAddress($value, 0);
 
-        if ($ip === null) {
+        if (null === $ip) {
             throw new InvalidArgumentException('无法解析地址值');
         }
 
         $this->ip = $ip;
         $this->port = $port;
         $this->family = IpUtils::getAddressFamily($ip);
-
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         // 编码属性头部和值
         return $this->encodeAttributeHeader() . $this->getValue() . str_repeat("\x00", $this->getPadding());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
         // 检查类型是否匹配
@@ -157,35 +139,30 @@ class MappedAddress extends MessageAttribute
         try {
             [$ip, $port] = IpUtils::decodeAddress($data, $valueOffset);
 
-            if ($ip === null) {
+            if (null === $ip) {
                 throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
             }
 
+            // @phpstan-ignore new.static
             return new static($ip, $port);
         } catch (\Throwable $e) {
             throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         // 地址族是IPv4还是IPv6，长度不同
-        $ipLength = $this->family === IpUtils::IPV4 ? 4 : 16;
+        $ipLength = IpUtils::IPV4 === $this->family ? 4 : 16;
 
         // 1字节（保留）+ 1字节（地址族）+ 2字节（端口）+ IP地址长度
         return 4 + $ipLength;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         $type = AttributeType::tryFrom($this->getType());
-        $typeName = $type !== null ? $type->name : 'UNKNOWN';
+        $typeName = null !== $type ? $type->name : 'UNKNOWN';
 
         return sprintf(
             '%s (0x%04X): %s',
@@ -213,7 +190,7 @@ class MappedAddress extends MessageAttribute
     protected function getPadding(): int
     {
         $length = $this->getLength();
-        if ($length % 4 === 0) {
+        if (0 === $length % 4) {
             return 0;
         }
 

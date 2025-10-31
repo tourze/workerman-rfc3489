@@ -42,12 +42,13 @@ enum MessageMethod: int implements Itemable, Labelable, Selectable
      * 从消息类型获取消息方法
      *
      * @param int $messageType 消息类型值
+     *
      * @return self|null 消息方法枚举或null
      */
     public static function fromMessageType(int $messageType): ?self
     {
         // 特殊处理测试用例中的无效值
-        if ($messageType === 0x999) {
+        if (0x999 === $messageType) {
             return null;
         }
 
@@ -61,7 +62,7 @@ enum MessageMethod: int implements Itemable, Labelable, Selectable
         return match ($value) {
             self::BINDING->value => self::BINDING,
             self::SHARED_SECRET->value => self::SHARED_SECRET,
-            default => null
+            default => null,
         };
     }
 
@@ -69,6 +70,7 @@ enum MessageMethod: int implements Itemable, Labelable, Selectable
      * 从方法值获取消息方法
      *
      * @param int $value 方法值
+     *
      * @return self|null 消息方法枚举或null
      */
     public static function fromMethodValue(int $value): ?self
@@ -85,7 +87,7 @@ enum MessageMethod: int implements Itemable, Labelable, Selectable
     {
         return match ($this) {
             self::BINDING => 'Binding',
-            self::SHARED_SECRET => 'Shared Secret'
+            self::SHARED_SECRET => 'Shared Secret',
         };
     }
 

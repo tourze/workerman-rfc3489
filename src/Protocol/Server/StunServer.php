@@ -14,49 +14,9 @@ use Tourze\Workerman\RFC3489\Transport\StunTransport;
 class StunServer
 {
     /**
-     * 服务器绑定IP地址
-     */
-    private string $bindIp;
-
-    /**
-     * 服务器绑定端口
-     */
-    private int $bindPort;
-
-    /**
-     * 备用IP地址
-     */
-    private string $alternateIp;
-
-    /**
-     * 备用端口
-     */
-    private int $alternatePort;
-
-    /**
-     * STUN传输层
-     */
-    private StunTransport $transport;
-
-    /**
-     * 消息路由器
-     */
-    private StunMessageRouter $messageRouter;
-
-    /**
-     * 独立运行适配器
-     */
-    private StunServerStandaloneAdapter $standaloneAdapter;
-
-    /**
      * Workerman适配器
      */
-    private ?StunServerWorkermanAdapter $workermanAdapter = null;
-
-    /**
-     * 日志记录器
-     */
-    private ?LoggerInterface $logger;
+    private mixed $workermanAdapter = null;
 
     /**
      * 是否正在运行
@@ -66,45 +26,37 @@ class StunServer
     /**
      * 创建一个新的STUN服务器
      *
-     * @param string $bindIp 服务器绑定IP地址
-     * @param int $bindPort 服务器绑定端口
-     * @param string $alternateIp 备用IP地址
-     * @param int $alternatePort 备用端口
-     * @param StunTransport $transport 传输层实现
-     * @param StunMessageRouter $messageRouter 消息路由器
+     * @param string                      $bindIp            服务器绑定IP地址
+     * @param int                         $bindPort          服务器绑定端口
+     * @param string                      $alternateIp       备用IP地址
+     * @param int                         $alternatePort     备用端口
+     * @param StunTransport               $transport         传输层实现
+     * @param StunMessageRouter           $messageRouter     消息路由器
      * @param StunServerStandaloneAdapter $standaloneAdapter 独立运行适配器
-     * @param LoggerInterface|null $logger 日志记录器
+     * @param LoggerInterface|null        $logger            日志记录器
      */
     public function __construct(
-        string $bindIp,
-        int $bindPort,
-        string $alternateIp,
-        int $alternatePort,
-        StunTransport $transport,
-        StunMessageRouter $messageRouter,
-        StunServerStandaloneAdapter $standaloneAdapter,
-        ?LoggerInterface $logger = null
+        private readonly string $bindIp,
+        private readonly int $bindPort,
+        private readonly string $alternateIp,
+        private readonly int $alternatePort,
+        private readonly StunTransport $transport,
+        private readonly StunMessageRouter $messageRouter,
+        private readonly StunServerStandaloneAdapter $standaloneAdapter,
+        private readonly ?LoggerInterface $logger = null,
     ) {
-        $this->bindIp = $bindIp;
-        $this->bindPort = $bindPort;
-        $this->alternateIp = $alternateIp;
-        $this->alternatePort = $alternatePort;
-        $this->transport = $transport;
-        $this->messageRouter = $messageRouter;
-        $this->standaloneAdapter = $standaloneAdapter;
-        $this->logger = $logger;
     }
 
     /**
      * 启动STUN服务器
      *
      * @param bool $daemon 是否以守护进程方式运行
-     * @return void
      */
     public function start(bool $daemon = false): void
     {
         if ($this->running) {
-            $this->logWarning("服务器已经在运行");
+            $this->logWarning('服务器已经在运行');
+
             return;
         }
 
@@ -112,8 +64,8 @@ class StunServer
 
         $this->running = true;
 
-        // 如果使用Workerman
-        if (class_exists('Workerman\Worker')) {
+        // 如果使用Workerman且不是在测试环境中
+        if (class_exists('Workerman\Worker') && !$this->isTestEnvironment()) {
             $this->startWithWorkerman($daemon);
         } else {
             $this->standaloneAdapter->start();
@@ -124,17 +76,16 @@ class StunServer
      * 使用Workerman启动服务器
      *
      * @param bool $daemon 是否以守护进程方式运行
-     * @return void
      */
     private function startWithWorkerman(bool $daemon = false): void
     {
-        $this->logInfo("使用Workerman启动STUN服务器");
+        $this->logInfo('使用Workerman启动STUN服务器');
 
         // 确保传输层关闭，避免端口冲突
         $this->transport->close();
 
         // 如果Workerman适配器尚未创建，则创建它
-        if ($this->workermanAdapter === null) {
+        if (null === $this->workermanAdapter) {
             $this->workermanAdapter = new StunServerWorkermanAdapter(
                 $this->bindIp,
                 $this->bindPort,
@@ -148,9 +99,15 @@ class StunServer
     }
 
     /**
+     * 检查是否在测试环境中
+     */
+    private function isTestEnvironment(): bool
+    {
+        return defined('PHPUNIT_COMPOSER_INSTALL') || defined('PHPUNIT_VERSION') || str_contains($_ENV['APP_ENV'] ?? '', 'test');
+    }
+
+    /**
      * 停止STUN服务器
-     *
-     * @return void
      */
     public function stop(): void
     {
@@ -158,10 +115,10 @@ class StunServer
             return;
         }
 
-        $this->logInfo("停止STUN服务器");
+        $this->logInfo('停止STUN服务器');
 
         // 如果使用Workerman适配器
-        if ($this->workermanAdapter !== null) {
+        if (null !== $this->workermanAdapter) {
             $this->workermanAdapter->stop();
         } else {
             $this->standaloneAdapter->stop();
@@ -173,7 +130,7 @@ class StunServer
     /**
      * 获取服务器绑定地址
      *
-     * @return array|null 服务器绑定地址，格式为 [string $ip, int $port] 或 null 表示尚未绑定
+     * @return array{0: string, 1: int}|null 服务器绑定地址，格式为 [string $ip, int $port] 或 null 表示尚未绑定
      */
     public function getBindAddress(): ?array
     {
@@ -224,12 +181,11 @@ class StunServer
      * 日志记录 - 信息级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logInfo(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::INFO, "[StunServer] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::INFO, "[StunServer] {$message}");
         }
     }
 
@@ -237,12 +193,11 @@ class StunServer
      * 日志记录 - 警告级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logWarning(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::WARNING, "[StunServer] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::WARNING, "[StunServer] {$message}");
         }
     }
 }

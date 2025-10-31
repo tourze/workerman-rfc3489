@@ -38,7 +38,7 @@ class ChangeRequest extends MessageAttribute
     /**
      * 创建一个新的CHANGE-REQUEST属性
      *
-     * @param bool $changeIp 是否更改IP地址
+     * @param bool $changeIp   是否更改IP地址
      * @param bool $changePort 是否更改端口
      */
     public function __construct(bool $changeIp = false, bool $changePort = false)
@@ -72,29 +72,22 @@ class ChangeRequest extends MessageAttribute
      * 设置是否更改IP地址
      *
      * @param bool $changeIp 是否更改IP地址
-     * @return self 当前实例，用于链式调用
      */
-    public function setChangeIp(bool $changeIp): self
+    public function setChangeIp(bool $changeIp): void
     {
         $this->changeIp = $changeIp;
-        return $this;
     }
 
     /**
      * 设置是否更改端口
      *
      * @param bool $changePort 是否更改端口
-     * @return self 当前实例，用于链式调用
      */
-    public function setChangePort(bool $changePort): self
+    public function setChangePort(bool $changePort): void
     {
         $this->changePort = $changePort;
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         $flags = 0;
@@ -111,7 +104,13 @@ class ChangeRequest extends MessageAttribute
     }
 
     /**
-     * {@inheritdoc}
+     * 从二进制数据解码CHANGE-REQUEST属性
+     *
+     * @param string $data   二进制数据
+     * @param int    $offset 起始偏移量
+     * @param int    $length 数据长度
+     *
+     * @return static 解码后的属性实例
      */
     public static function decode(string $data, int $offset, int $length): static
     {
@@ -124,20 +123,15 @@ class ChangeRequest extends MessageAttribute
         $changeIp = ($flags & self::CHANGE_IP) !== 0;
         $changePort = ($flags & self::CHANGE_PORT) !== 0;
 
+        // @phpstan-ignore new.static
         return new static($changeIp, $changePort);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         return 4; // 固定长度4字节
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         $changes = [];
@@ -150,6 +144,6 @@ class ChangeRequest extends MessageAttribute
             $changes[] = 'Port';
         }
 
-        return sprintf('CHANGE-REQUEST: %s', empty($changes) ? 'None' : implode(', ', $changes));
+        return sprintf('CHANGE-REQUEST: %s', 0 === count($changes) ? 'None' : implode(', ', $changes));
     }
 }

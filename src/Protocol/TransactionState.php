@@ -11,7 +11,7 @@ use Tourze\EnumExtra\SelectTrait;
 /**
  * STUN事务状态枚举
  */
-enum TransactionState implements Itemable, Labelable, Selectable
+enum TransactionState: string implements Itemable, Labelable, Selectable
 {
     use ItemTrait;
     use SelectTrait;
@@ -19,27 +19,27 @@ enum TransactionState implements Itemable, Labelable, Selectable
     /**
      * 待处理状态
      */
-    case PENDING;
+    case PENDING = 'pending';
 
     /**
      * 已完成状态
      */
-    case COMPLETED;
+    case COMPLETED = 'completed';
 
     /**
      * 超时状态
      */
-    case TIMEOUT;
+    case TIMEOUT = 'timeout';
 
     /**
      * 失败状态
      */
-    case FAILED;
+    case FAILED = 'failed';
 
     /**
      * 取消状态
      */
-    case CANCELLED;
+    case CANCELLED = 'cancelled';
 
     /**
      * 获取事务状态的标签（实现Labelable接口）

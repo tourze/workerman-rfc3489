@@ -137,7 +137,7 @@ enum AttributeType: int implements Itemable, Labelable, Selectable
             self::MESSAGE_INTEGRITY => 'MESSAGE-INTEGRITY',
             self::ERROR_CODE => 'ERROR-CODE',
             self::UNKNOWN_ATTRIBUTES => 'UNKNOWN-ATTRIBUTES',
-            self::REFLECTED_FROM => 'REFLECTED-FROM'
+            self::REFLECTED_FROM => 'REFLECTED-FROM',
         };
     }
 
@@ -155,6 +155,7 @@ enum AttributeType: int implements Itemable, Labelable, Selectable
      * 从整数值获取属性类型枚举
      *
      * @param int $type 属性类型值
+     *
      * @return self|null 属性类型枚举或null
      */
     public static function fromValue(int $type): ?self
@@ -166,28 +167,30 @@ enum AttributeType: int implements Itemable, Labelable, Selectable
      * 检查属性类型是否是已知类型
      *
      * @param int $type 属性类型值
+     *
      * @return bool 是否是已知类型
      */
     public static function isKnown(int $type): bool
     {
-        return self::tryFrom($type) !== null;
+        return null !== self::tryFrom($type);
     }
 
     /**
      * 检查属性类型是否是已知类型
      *
      * @param int $type 属性类型值
+     *
      * @return bool 是否是已知类型
      */
     public static function isKnownAttribute(int $type): bool
     {
-        return self::tryFrom($type) !== null;
+        return null !== self::tryFrom($type);
     }
 
     /**
      * 获取所有地址类型属性
      *
-     * @return array 地址类型属性数组
+     * @return array<self> 地址类型属性数组
      */
     public static function addressAttributes(): array
     {
@@ -196,7 +199,7 @@ enum AttributeType: int implements Itemable, Labelable, Selectable
             self::RESPONSE_ADDRESS,
             self::SOURCE_ADDRESS,
             self::CHANGED_ADDRESS,
-            self::REFLECTED_FROM
+            self::REFLECTED_FROM,
         ];
     }
 
@@ -204,16 +207,17 @@ enum AttributeType: int implements Itemable, Labelable, Selectable
      * 检查属性类型是否是地址类型
      *
      * @param int $type 属性类型值
+     *
      * @return bool 是否是地址类型
      */
     public static function isAddressAttribute(int $type): bool
     {
         $attribute = self::tryFrom($type);
-        if ($attribute === null) {
+        if (null === $attribute) {
             return false;
         }
 
-        return in_array($attribute, self::addressAttributes());
+        return in_array($attribute, self::addressAttributes(), true);
     }
 
     /**

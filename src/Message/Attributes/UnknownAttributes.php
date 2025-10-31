@@ -47,6 +47,7 @@ class UnknownAttributes extends MessageAttribute
      * 添加未知属性类型
      *
      * @param int $attribute 未知属性类型
+     *
      * @return self 当前实例，用于链式调用
      */
     public function addAttribute(int $attribute): self
@@ -58,9 +59,6 @@ class UnknownAttributes extends MessageAttribute
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         $result = '';
@@ -72,41 +70,33 @@ class UnknownAttributes extends MessageAttribute
         return $result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
-        if ($length % 2 !== 0) {
+        if (0 !== $length % 2) {
             throw new InvalidArgumentException('UNKNOWN-ATTRIBUTES属性长度必须是2的倍数');
         }
 
         $count = $length / 2;
         $attributes = [];
 
-        for ($i = 0; $i < $count; $i++) {
+        for ($i = 0; $i < $count; ++$i) {
             $attrValue = unpack('n', substr($data, $offset + $i * 2, 2));
 
-            if ($attrValue) {
+            if (false !== $attrValue) {
                 $attributes[] = $attrValue[1];
             }
         }
 
+        // @phpstan-ignore new.static
         return new static($attributes);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         // 每个属性类型占用2个字节
         return count($this->attributes) * 2;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         $attributeStrings = [];
@@ -114,9 +104,9 @@ class UnknownAttributes extends MessageAttribute
         foreach ($this->attributes as $attribute) {
             $hexValue = sprintf('0x%04X', $attribute);
             $attrType = AttributeType::tryFrom($attribute);
-            $name = $attrType !== null ? $attrType->getName() : '未知';
+            $name = null !== $attrType ? $attrType->getName() : '未知';
 
-            $attributeStrings[] = "$hexValue ($name)";
+            $attributeStrings[] = "{$hexValue} ({$name})";
         }
 
         return sprintf('UNKNOWN-ATTRIBUTES: %s', implode(', ', $attributeStrings));

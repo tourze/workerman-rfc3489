@@ -10,22 +10,16 @@ namespace Tourze\Workerman\RFC3489\Exception;
 class TimeoutException extends StunException
 {
     /**
-     * 超时时间（毫秒）
-     */
-    private int $timeout;
-
-    /**
      * 创建一个新的超时异常
      *
-     * @param string $message 异常消息
-     * @param int $timeout 超时时间（毫秒）
-     * @param int $code 异常代码
+     * @param string          $message  异常消息
+     * @param int             $timeout  超时时间（毫秒）
+     * @param int             $code     异常代码
      * @param \Throwable|null $previous 上一个异常
      */
-    public function __construct(string $message = "操作超时", int $timeout = 0, int $code = 0, ?\Throwable $previous = null)
+    public function __construct(string $message = '操作超时', private readonly int $timeout = 0, int $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
-        $this->timeout = $timeout;
     }
 
     /**
@@ -42,6 +36,7 @@ class TimeoutException extends StunException
      * 创建一个接收超时异常
      *
      * @param int $timeout 超时时间（毫秒）
+     *
      * @return self 异常实例
      */
     public static function receiveTimeout(int $timeout): self
@@ -53,6 +48,7 @@ class TimeoutException extends StunException
      * 创建一个发送超时异常
      *
      * @param int $timeout 超时时间（毫秒）
+     *
      * @return self 异常实例
      */
     public static function sendTimeout(int $timeout): self
@@ -64,12 +60,14 @@ class TimeoutException extends StunException
      * 创建一个事务超时异常
      *
      * @param string $transactionId 事务ID
-     * @param int $timeout 超时时间（毫秒）
+     * @param int    $timeout       超时时间（毫秒）
+     *
      * @return self 异常实例
      */
     public static function transactionTimeout(string $transactionId, int $timeout): self
     {
         $hexId = bin2hex($transactionId);
-        return new self("事务 $hexId 超时（{$timeout}毫秒）", $timeout, 2003);
+
+        return new self("事务 {$hexId} 超时（{$timeout}毫秒）", $timeout, 2003);
     }
 }

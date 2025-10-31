@@ -2,8 +2,8 @@
 
 namespace Tourze\Workerman\RFC3489\Utils;
 
-use Tourze\Workerman\RFC3489\Message\Constants;
 use Tourze\Workerman\RFC3489\Exception\InvalidArgumentException;
+use Tourze\Workerman\RFC3489\Message\Constants;
 
 /**
  * STUN事务ID生成器
@@ -17,7 +17,7 @@ class TransactionIdGenerator
     /**
      * 已使用的事务ID集合
      *
-     * @var array
+     * @var array<string, bool>
      */
     private static array $usedIds = [];
 
@@ -25,8 +25,10 @@ class TransactionIdGenerator
      * 生成一个新的随机事务ID
      *
      * @param int|bool $length 事务ID长度（字节数）或是否确保唯一性
-     * @param bool $unique 是否确保唯一性
+     * @param bool     $unique 是否确保唯一性
+     *
      * @return string 随机事务ID
+     *
      * @throws InvalidArgumentException 如果长度参数无效
      */
     public static function generate(int|bool $length = Constants::TRANSACTION_ID_LENGTH, bool $unique = true): string
@@ -36,12 +38,12 @@ class TransactionIdGenerator
             $unique = $length;
             $length = Constants::TRANSACTION_ID_LENGTH;
         }
-        
+
         // 检查长度的有效性
         if ($length <= 0) {
             throw new InvalidArgumentException('事务ID长度必须大于0');
         }
-        
+
         $transactionId = random_bytes($length);
 
         if ($unique) {
@@ -64,7 +66,6 @@ class TransactionIdGenerator
      * 释放一个事务ID，允许重用
      *
      * @param string $transactionId 事务ID
-     * @return void
      */
     public static function release(string $transactionId): void
     {
@@ -76,18 +77,18 @@ class TransactionIdGenerator
      * 检查事务ID是否已被使用
      *
      * @param string $transactionId 事务ID
+     *
      * @return bool 是否已被使用
      */
     public static function isUsed(string $transactionId): bool
     {
         $key = bin2hex($transactionId);
+
         return isset(self::$usedIds[$key]);
     }
 
     /**
      * 清除所有已使用的事务ID记录
-     *
-     * @return void
      */
     public static function clear(): void
     {

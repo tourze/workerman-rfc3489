@@ -4,7 +4,7 @@ namespace Tourze\Workerman\RFC3489\Protocol;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Tourze\Workerman\RFC3489\Exception\StunException;
+use Tourze\Workerman\RFC3489\Exception\ProtocolException;
 use Tourze\Workerman\RFC3489\Utils\IpUtils;
 
 /**
@@ -26,6 +26,8 @@ class AddressMappingCollector
      *   ],
      *   ...
      * ]
+     *
+     * @var array<array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}, timestamp: float}>
      */
     private array $mappings = [];
 
@@ -41,9 +43,10 @@ class AddressMappingCollector
     /**
      * 添加一个地址映射
      *
-     * @param array $localAddress 本地地址，格式为 ['ip' => string, 'port' => int]
-     * @param array $remoteAddress 远程服务器地址，格式为 ['ip' => string, 'port' => int]
-     * @param array $mappedAddress 映射地址，格式为 ['ip' => string, 'port' => int]
+     * @param array{ip: string, port: int} $localAddress  本地地址
+     * @param array{ip: string, port: int} $remoteAddress 远程服务器地址
+     * @param array{ip: string, port: int} $mappedAddress 映射地址
+     *
      * @return self 当前实例，用于链式调用
      */
     public function addMapping(array $localAddress, array $remoteAddress, array $mappedAddress): self
@@ -52,11 +55,11 @@ class AddressMappingCollector
             'local' => $localAddress,
             'remote' => $remoteAddress,
             'mapped' => $mappedAddress,
-            'timestamp' => microtime(true)
+            'timestamp' => microtime(true),
         ];
 
         $this->logInfo(sprintf(
-            "添加地址映射: 本地 %s:%d -> 远程 %s:%d -> 映射 %s:%d",
+            '添加地址映射: 本地 %s:%d -> 远程 %s:%d -> 映射 %s:%d',
             $localAddress['ip'],
             $localAddress['port'],
             $remoteAddress['ip'],
@@ -71,23 +74,23 @@ class AddressMappingCollector
     /**
      * 添加一个规范格式的地址映射
      *
-     * @param string $localIp 本地IP地址
-     * @param int $localPort 本地端口
-     * @param string $remoteIp 远程服务器IP地址
-     * @param int $remotePort 远程服务器端口
-     * @param string $mappedIp 映射IP地址
-     * @param int $mappedPort 映射端口
+     * @param string $localIp    本地IP地址
+     * @param int    $localPort  本地端口
+     * @param string $remoteIp   远程服务器IP地址
+     * @param int    $remotePort 远程服务器端口
+     * @param string $mappedIp   映射IP地址
+     * @param int    $mappedPort 映射端口
+     *
      * @return self 当前实例，用于链式调用
      */
     public function add(
         string $localIp,
-        int    $localPort,
+        int $localPort,
         string $remoteIp,
-        int    $remotePort,
+        int $remotePort,
         string $mappedIp,
-        int    $mappedPort
-    ): self
-    {
+        int $mappedPort,
+    ): self {
         return $this->addMapping(
             ['ip' => $localIp, 'port' => $localPort],
             ['ip' => $remoteIp, 'port' => $remotePort],
@@ -98,7 +101,7 @@ class AddressMappingCollector
     /**
      * 获取所有映射
      *
-     * @return array 所有映射
+     * @return array<array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}, timestamp: float}> 所有映射
      */
     public function getAllMappings(): array
     {
@@ -108,9 +111,10 @@ class AddressMappingCollector
     /**
      * 根据本地地址获取映射
      *
-     * @param string $localIp 本地IP地址
-     * @param int $localPort 本地端口
-     * @return array 匹配的映射列表
+     * @param string $localIp   本地IP地址
+     * @param int    $localPort 本地端口
+     *
+     * @return array<array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}, timestamp: float}> 匹配的映射列表
      */
     public function getMappingsByLocalAddress(string $localIp, int $localPort): array
     {
@@ -122,9 +126,10 @@ class AddressMappingCollector
     /**
      * 根据远程服务器地址获取映射
      *
-     * @param string $remoteIp 远程服务器IP地址
-     * @param int $remotePort 远程服务器端口
-     * @return array 匹配的映射列表
+     * @param string $remoteIp   远程服务器IP地址
+     * @param int    $remotePort 远程服务器端口
+     *
+     * @return array<array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}, timestamp: float}> 匹配的映射列表
      */
     public function getMappingsByRemoteAddress(string $remoteIp, int $remotePort): array
     {
@@ -136,9 +141,10 @@ class AddressMappingCollector
     /**
      * 根据映射地址获取映射
      *
-     * @param string $mappedIp 映射IP地址
-     * @param int $mappedPort 映射端口
-     * @return array 匹配的映射列表
+     * @param string $mappedIp   映射IP地址
+     * @param int    $mappedPort 映射端口
+     *
+     * @return array<array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}, timestamp: float}> 匹配的映射列表
      */
     public function getMappingsByMappedAddress(string $mappedIp, int $mappedPort): array
     {
@@ -191,12 +197,12 @@ class AddressMappingCollector
                 $mappedAddresses[$localKey] = [];
             }
 
-            if (!in_array($mappedKey, $mappedAddresses[$localKey])) {
+            if (!in_array($mappedKey, $mappedAddresses[$localKey], true)) {
                 $mappedAddresses[$localKey][] = $mappedKey;
             }
         }
 
-        foreach ($mappedAddresses as $localKey => $mappedKeys) {
+        foreach ($mappedAddresses as $mappedKeys) {
             if (count($mappedKeys) > 1) {
                 return true;
             }
@@ -218,17 +224,11 @@ class AddressMappingCollector
         }
 
         foreach ($mappings as $i => $mapping1) {
-            for ($j = $i + 1; $j < count($mappings); $j++) {
+            for ($j = $i + 1; $j < count($mappings); ++$j) {
                 $mapping2 = $mappings[$j];
 
-                // 如果本地地址相同，远程IP不同，检查映射是否不同
-                if (IpUtils::ipEquals($mapping1['local']['ip'], $mapping2['local']['ip']) &&
-                    $mapping1['local']['port'] === $mapping2['local']['port'] &&
-                    !IpUtils::ipEquals($mapping1['remote']['ip'], $mapping2['remote']['ip']) &&
-                    (
-                        !IpUtils::ipEquals($mapping1['mapped']['ip'], $mapping2['mapped']['ip']) ||
-                        $mapping1['mapped']['port'] !== $mapping2['mapped']['port']
-                    )
+                if ($this->isSameLocalDifferentRemoteIp($mapping1, $mapping2)
+                    && $this->isDifferentMappedAddress($mapping1, $mapping2)
                 ) {
                     return true;
                 }
@@ -236,6 +236,31 @@ class AddressMappingCollector
         }
 
         return false;
+    }
+
+    /**
+     * 检查两个映射是否有相同的本地地址但不同的远程IP
+     *
+     * @param array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}} $mapping1
+     * @param array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}} $mapping2
+     */
+    private function isSameLocalDifferentRemoteIp(array $mapping1, array $mapping2): bool
+    {
+        return IpUtils::ipEquals($mapping1['local']['ip'], $mapping2['local']['ip'])
+            && $mapping1['local']['port'] === $mapping2['local']['port']
+            && !IpUtils::ipEquals($mapping1['remote']['ip'], $mapping2['remote']['ip']);
+    }
+
+    /**
+     * 检查两个映射是否有不同的映射地址
+     *
+     * @param array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}} $mapping1
+     * @param array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}} $mapping2
+     */
+    private function isDifferentMappedAddress(array $mapping1, array $mapping2): bool
+    {
+        return !IpUtils::ipEquals($mapping1['mapped']['ip'], $mapping2['mapped']['ip'])
+            || $mapping1['mapped']['port'] !== $mapping2['mapped']['port'];
     }
 
     /**
@@ -251,18 +276,11 @@ class AddressMappingCollector
         }
 
         foreach ($mappings as $i => $mapping1) {
-            for ($j = $i + 1; $j < count($mappings); $j++) {
+            for ($j = $i + 1; $j < count($mappings); ++$j) {
                 $mapping2 = $mappings[$j];
 
-                // 如果本地地址相同，远程IP相同，远程端口不同，检查映射是否不同
-                if (IpUtils::ipEquals($mapping1['local']['ip'], $mapping2['local']['ip']) &&
-                    $mapping1['local']['port'] === $mapping2['local']['port'] &&
-                    IpUtils::ipEquals($mapping1['remote']['ip'], $mapping2['remote']['ip']) &&
-                    $mapping1['remote']['port'] !== $mapping2['remote']['port'] &&
-                    (
-                        !IpUtils::ipEquals($mapping1['mapped']['ip'], $mapping2['mapped']['ip']) ||
-                        $mapping1['mapped']['port'] !== $mapping2['mapped']['port']
-                    )
+                if ($this->isSameLocalSameRemoteIpDifferentPort($mapping1, $mapping2)
+                    && $this->isDifferentMappedAddress($mapping1, $mapping2)
                 ) {
                     return true;
                 }
@@ -273,23 +291,38 @@ class AddressMappingCollector
     }
 
     /**
+     * 检查两个映射是否有相同的本地地址和远程IP但不同的远程端口
+     *
+     * @param array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}} $mapping1
+     * @param array{local: array{ip: string, port: int}, remote: array{ip: string, port: int}, mapped: array{ip: string, port: int}} $mapping2
+     */
+    private function isSameLocalSameRemoteIpDifferentPort(array $mapping1, array $mapping2): bool
+    {
+        return IpUtils::ipEquals($mapping1['local']['ip'], $mapping2['local']['ip'])
+            && $mapping1['local']['port'] === $mapping2['local']['port']
+            && IpUtils::ipEquals($mapping1['remote']['ip'], $mapping2['remote']['ip'])
+            && $mapping1['remote']['port'] !== $mapping2['remote']['port'];
+    }
+
+    /**
      * 推断NAT类型
      *
      * 根据收集到的地址映射推断NAT类型
      *
      * @return NatType 推断的NAT类型
-     * @throws StunException 如果映射数量不足以推断NAT类型
+     *
+     * @throws ProtocolException 如果映射数量不足以推断NAT类型
      */
     public function inferNatType(): NatType
     {
         if (count($this->mappings) < 2) {
-            throw new StunException("映射数量不足以推断NAT类型，至少需要2个映射");
+            throw ProtocolException::invalidState('映射数量不足', '至少需要2个映射才能推断NAT类型');
         }
 
         // 检查第一个映射的本地和映射地址是否相同
         $firstMapping = $this->mappings[0];
-        $isLocalEqualMapped = IpUtils::ipEquals($firstMapping['local']['ip'], $firstMapping['mapped']['ip']) &&
-            $firstMapping['local']['port'] === $firstMapping['mapped']['port'];
+        $isLocalEqualMapped = IpUtils::ipEquals($firstMapping['local']['ip'], $firstMapping['mapped']['ip'])
+            && $firstMapping['local']['port'] === $firstMapping['mapped']['port'];
 
         if ($isLocalEqualMapped) {
             // 如果本地地址和映射地址相同，可能是开放互联网或对称UDP防火墙
@@ -325,7 +358,8 @@ class AddressMappingCollector
     public function clear(): self
     {
         $this->mappings = [];
-        $this->logInfo("清空所有地址映射");
+        $this->logInfo('清空所有地址映射');
+
         return $this;
     }
 
@@ -343,24 +377,21 @@ class AddressMappingCollector
      * 设置日志记录器
      *
      * @param LoggerInterface|null $logger 日志记录器
-     * @return self 当前实例，用于链式调用
      */
-    public function setLogger(?LoggerInterface $logger): self
+    public function setLogger(?LoggerInterface $logger): void
     {
         $this->logger = $logger;
-        return $this;
     }
 
     /**
      * 日志记录 - 信息级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logInfo(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::INFO, "[AddressMappingCollector] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::INFO, "[AddressMappingCollector] {$message}");
         }
     }
 }

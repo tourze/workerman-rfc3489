@@ -26,22 +26,16 @@ class StunMessage
 {
     /**
      * 消息类型，由消息方法和消息类别组成
-     *
-     * @var int
      */
     protected int $messageType;
 
     /**
      * 消息长度（不包括头部）
-     *
-     * @var int
      */
     protected int $messageLength = 0;
 
     /**
      * 事务ID，用于匹配请求和响应
-     *
-     * @var string
      */
     protected string $transactionId;
 
@@ -55,7 +49,7 @@ class StunMessage
     /**
      * 创建一个新的STUN消息
      *
-     * @param int $messageType 消息类型
+     * @param int         $messageType   消息类型
      * @param string|null $transactionId 事务ID，如果为null会自动生成
      */
     public function __construct(int $messageType, ?string $transactionId = null)
@@ -78,12 +72,10 @@ class StunMessage
      * 设置消息类型
      *
      * @param int $messageType 消息类型值
-     * @return self 当前实例，用于链式调用
      */
-    public function setMessageType(int $messageType): self
+    public function setMessageType(int $messageType): void
     {
         $this->messageType = $messageType;
-        return $this;
     }
 
     /**
@@ -130,23 +122,23 @@ class StunMessage
      * 设置事务ID
      *
      * @param string $transactionId 事务ID
-     * @return self 当前实例，用于链式调用
      */
-    public function setTransactionId(string $transactionId): self
+    public function setTransactionId(string $transactionId): void
     {
         $this->transactionId = $transactionId;
-        return $this;
     }
 
     /**
      * 添加一个属性
      *
      * @param MessageAttribute $attribute 属性实例
+     *
      * @return self 当前实例，用于链式调用
      */
     public function addAttribute(MessageAttribute $attribute): self
     {
         $this->attributes[] = $attribute;
+
         return $this;
     }
 
@@ -164,6 +156,7 @@ class StunMessage
      * 获取指定类型的属性
      *
      * @param AttributeType $type 属性类型
+     *
      * @return MessageAttribute|null 找到的属性或null
      */
     public function getAttribute(AttributeType $type): ?MessageAttribute
@@ -181,6 +174,7 @@ class StunMessage
      * 获取指定类型的所有属性
      *
      * @param AttributeType $type 属性类型
+     *
      * @return MessageAttribute[] 属性列表
      */
     public function getAttributesByType(AttributeType $type): array
@@ -200,84 +194,157 @@ class StunMessage
      * 检查是否包含指定类型的属性
      *
      * @param AttributeType $type 属性类型
+     *
      * @return bool 是否包含
      */
     public function hasAttribute(AttributeType $type): bool
     {
-        return $this->getAttribute($type) !== null;
+        return null !== $this->getAttribute($type);
     }
 
     /**
      * 从二进制数据解码STUN消息
      *
      * @param string $data 二进制数据
+     *
      * @return self 解码后的消息实例
+     *
      * @throws MessageFormatException 如果解码失败
      */
     public static function decode(string $data): self
+    {
+        $header = self::decodeHeader($data);
+        $message = new self($header['type'], $header['transaction']);
+
+        self::validateMessageLength($data, $header['length']);
+        self::decodeAttributes($data, $message, $header['length']);
+
+        return $message;
+    }
+
+    /**
+     * 解码消息头部
+     *
+     * @param string $data 二进制数据
+     *
+     * @return array{type: int, length: int, transaction: string} 解码后的头部信息
+     *
+     * @throws MessageFormatException 如果解码失败
+     */
+    private static function decodeHeader(string $data): array
     {
         if (strlen($data) < Constants::HEADER_LENGTH) {
             throw new MessageFormatException('数据太短，无法解析STUN消息头部');
         }
 
-        // 解析消息头部
         $header = unpack('ntype/nlength/a16transaction', $data);
 
-        if (!$header) {
+        if (false === $header) {
             throw new MessageFormatException('无法解析STUN消息头部');
         }
 
-        $message = new self($header['type'], $header['transaction']);
+        return [
+            'type' => $header['type'],
+            'length' => $header['length'],
+            'transaction' => $header['transaction'],
+        ];
+    }
 
-        // 检查消息长度
-        $expectedLength = $header['length'];
+    /**
+     * 验证消息长度
+     *
+     * @param string $data           二进制数据
+     * @param int    $expectedLength 期望的长度
+     *
+     * @throws MessageFormatException 如果长度不足
+     */
+    private static function validateMessageLength(string $data, int $expectedLength): void
+    {
         if (strlen($data) < Constants::HEADER_LENGTH + $expectedLength) {
             throw new MessageFormatException('消息长度不足');
         }
+    }
 
-        // 解析消息属性
+    /**
+     * 解码消息属性
+     *
+     * @param string $data             二进制数据
+     * @param self   $message          消息实例
+     * @param int    $attributesLength 属性数据长度
+     *
+     * @throws MessageFormatException 如果解码失败
+     */
+    private static function decodeAttributes(string $data, self $message, int $attributesLength): void
+    {
         $offset = Constants::HEADER_LENGTH;
-        $endOffset = $offset + $expectedLength;
+        $endOffset = $offset + $attributesLength;
 
         while ($offset < $endOffset) {
-            if ($offset + 4 > $endOffset) {
-                throw new MessageFormatException('属性头部不完整');
-            }
+            $offset = self::decodeAttribute($data, $message, $offset, $endOffset);
+        }
+    }
 
-            // 解析属性头部
-            $attrHeader = unpack('ntype/nlength', substr($data, $offset, 4));
-
-            if (!$attrHeader) {
-                throw new MessageFormatException('无法解析属性头部');
-            }
-
-            $attrType = $attrHeader['type'];
-            $attrLength = $attrHeader['length'];
-
-            if ($offset + 4 + $attrLength > $endOffset) {
-                throw new MessageFormatException('属性数据不完整');
-            }
-
-            // 创建对应类型的属性实例
-            try {
-                $attributeType = AttributeType::tryFrom($attrType);
-                if ($attributeType !== null) {
-                    // 注意：这里传递的offset要包含属性头部
-                    $attribute = self::createAttributeFromType($attrType, $data, $offset, $attrLength);
-                    if ($attribute !== null) {
-                        $message->addAttribute($attribute);
-                    }
-                }
-            } catch (\Throwable $e) {
-                // 如果解析特定属性失败，记录错误但继续解析其他属性
-            }
-
-            // 移动到下一个属性，考虑4字节对齐
-            $padding = ($attrLength % 4) !== 0 ? 4 - ($attrLength % 4) : 0;
-            $offset += 4 + $attrLength + $padding;
+    /**
+     * 解码单个属性
+     *
+     * @param string $data      二进制数据
+     * @param self   $message   消息实例
+     * @param int    $offset    当前偏移量
+     * @param int    $endOffset 结束偏移量
+     *
+     * @return int 下一个属性的偏移量
+     *
+     * @throws MessageFormatException 如果解码失败
+     */
+    private static function decodeAttribute(string $data, self $message, int $offset, int $endOffset): int
+    {
+        if ($offset + 4 > $endOffset) {
+            throw new MessageFormatException('属性头部不完整');
         }
 
-        return $message;
+        $attrHeader = unpack('ntype/nlength', substr($data, $offset, 4));
+
+        if (false === $attrHeader) {
+            throw new MessageFormatException('无法解析属性头部');
+        }
+
+        $attrType = $attrHeader['type'];
+        $attrLength = $attrHeader['length'];
+
+        if ($offset + 4 + $attrLength > $endOffset) {
+            throw new MessageFormatException('属性数据不完整');
+        }
+
+        self::createAndAddAttribute($data, $message, $offset, $attrType, $attrLength);
+
+        // 移动到下一个属性，考虑4字节对齐
+        $padding = ($attrLength % 4) !== 0 ? 4 - ($attrLength % 4) : 0;
+
+        return $offset + 4 + $attrLength + $padding;
+    }
+
+    /**
+     * 创建并添加属性
+     *
+     * @param string $data       二进制数据
+     * @param self   $message    消息实例
+     * @param int    $offset     属性偏移量
+     * @param int    $attrType   属性类型
+     * @param int    $attrLength 属性长度
+     */
+    private static function createAndAddAttribute(string $data, self $message, int $offset, int $attrType, int $attrLength): void
+    {
+        try {
+            $attributeType = AttributeType::tryFrom($attrType);
+            if (null !== $attributeType) {
+                $attribute = self::createAttributeFromType($attrType, $data, $offset, $attrLength);
+                if (null !== $attribute) {
+                    $message->addAttribute($attribute);
+                }
+            }
+        } catch (\Throwable $e) {
+            // 如果解析特定属性失败，记录错误但继续解析其他属性
+        }
     }
 
     /**
@@ -349,10 +416,11 @@ class StunMessage
     /**
      * 根据属性类型创建对应的属性实例
      *
-     * @param int $type 属性类型
-     * @param string $data 二进制数据
-     * @param int $offset 起始偏移量
-     * @param int $length 数据长度
+     * @param int    $type   属性类型
+     * @param string $data   二进制数据
+     * @param int    $offset 起始偏移量
+     * @param int    $length 数据长度
+     *
      * @return MessageAttribute|null 属性实例或null
      */
     protected static function createAttributeFromType(int $type, string $data, int $offset, int $length): ?MessageAttribute
@@ -370,7 +438,7 @@ class StunMessage
                 AttributeType::ERROR_CODE->value => ErrorCodeAttribute::decode($data, $offset, $length),
                 AttributeType::UNKNOWN_ATTRIBUTES->value => UnknownAttributes::decode($data, $offset, $length),
                 AttributeType::REFLECTED_FROM->value => ReflectedFrom::decode($data, $offset, $length),
-                default => null
+                default => null,
             };
         } catch (\Throwable $e) {
             // 解码失败，返回null
@@ -388,14 +456,14 @@ class StunMessage
         $method = $this->getMethod();
         $class = $this->getClass();
 
-        $methodName = $method !== null ? $method->name : 'UNKNOWN';
-        $className = $class !== null ? $class->name : 'UNKNOWN';
+        $methodName = null !== $method ? $method->name : 'UNKNOWN';
+        $className = null !== $class ? $class->name : 'UNKNOWN';
         $transactionId = bin2hex($this->transactionId);
 
-        $result = "STUN $methodName $className (transaction-id: $transactionId)\n";
+        $result = "STUN {$methodName} {$className} (transaction-id: {$transactionId})\n";
 
         foreach ($this->attributes as $index => $attribute) {
-            $result .= "  " . ($index + 1) . ". " . $attribute->__toString() . "\n";
+            $result .= '  ' . ($index + 1) . '. ' . $attribute->__toString() . "\n";
         }
 
         return $result;

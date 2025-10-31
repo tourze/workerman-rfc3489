@@ -46,12 +46,10 @@ class Password extends MessageAttribute
      * 设置密码
      *
      * @param string $password 密码
-     * @return self 当前实例，用于链式调用
      */
-    public function setPassword(string $password): self
+    public function setPassword(string $password): void
     {
         $this->password = $password;
-        return $this;
     }
 
     /**
@@ -68,22 +66,18 @@ class Password extends MessageAttribute
      * 设置密码值
      *
      * @param mixed $value 密码值
-     * @return self 当前实例，用于链式调用
+     *
      * @throws \InvalidArgumentException 如果值不是字符串
      */
-    public function setValue(mixed $value): MessageAttribute
+    public function setValue(mixed $value): void
     {
         if (!is_string($value)) {
             throw new InvalidArgumentException('Password属性值必须是字符串');
         }
 
         $this->password = $value;
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         // 密码最大长度限制为128字节
@@ -101,41 +95,41 @@ class Password extends MessageAttribute
         return $encoded;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
         // 检查类型是否匹配
-        $type = unpack('n', substr($data, $offset, 2))[1];
+        $typeData = unpack('n', substr($data, $offset, 2));
+        if (false === $typeData) {
+            throw new InvalidArgumentException('无法读取PASSWORD属性类型');
+        }
+        $type = $typeData[1];
         if ($type !== AttributeType::PASSWORD->value) {
             throw new InvalidArgumentException('无法解析PASSWORD属性');
         }
 
         // 读取长度
-        $valueLength = unpack('n', substr($data, $offset + 2, 2))[1];
+        $lengthData = unpack('n', substr($data, $offset + 2, 2));
+        if (false === $lengthData) {
+            throw new InvalidArgumentException('无法读取PASSWORD属性长度');
+        }
+        $valueLength = $lengthData[1];
 
         // 提取密码
         $password = substr($data, $offset + 4, $valueLength);
 
+        // @phpstan-ignore new.static
         return new static($password);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         return strlen(substr($this->password, 0, Constants::MAX_PASSWORD_LENGTH));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         $type = AttributeType::tryFrom($this->getType());
-        $typeName = $type !== null ? $type->name : 'UNKNOWN';
+        $typeName = null !== $type ? $type->name : 'UNKNOWN';
 
         return sprintf(
             '%s (0x%04X): Length=%d, Value=%s',
@@ -164,7 +158,7 @@ class Password extends MessageAttribute
     protected function getPadding(): int
     {
         $length = $this->getLength();
-        if ($length % 4 === 0) {
+        if (0 === $length % 4) {
             return 0;
         }
 

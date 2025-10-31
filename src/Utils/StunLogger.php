@@ -15,8 +15,6 @@ class StunLogger extends AbstractLogger implements LoggerInterface
 {
     /**
      * 内部日志记录器实例
-     *
-     * @var LoggerInterface
      */
     private LoggerInterface $logger;
 
@@ -33,10 +31,9 @@ class StunLogger extends AbstractLogger implements LoggerInterface
     /**
      * 记录日志
      *
-     * @param mixed $level 日志级别
+     * @param mixed              $level   日志级别
      * @param string|\Stringable $message 日志消息
-     * @param array $context 上下文信息
-     * @return void
+     * @param array<mixed>       $context 上下文信息
      */
     public function log($level, $message, array $context = []): void
     {
@@ -57,7 +54,6 @@ class StunLogger extends AbstractLogger implements LoggerInterface
      * 设置内部日志记录器实例
      *
      * @param LoggerInterface $logger 日志记录器实例
-     * @return void
      */
     public function setInternalLogger(LoggerInterface $logger): void
     {

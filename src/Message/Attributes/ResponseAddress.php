@@ -17,16 +17,6 @@ use Tourze\Workerman\RFC3489\Utils\IpUtils;
 class ResponseAddress extends MessageAttribute
 {
     /**
-     * IP地址
-     */
-    private string $ip;
-
-    /**
-     * 端口号
-     */
-    private int $port;
-
-    /**
      * 地址族
      */
     private int $family;
@@ -34,14 +24,14 @@ class ResponseAddress extends MessageAttribute
     /**
      * 创建一个新的RESPONSE-ADDRESS属性
      *
-     * @param string $ip IP地址
-     * @param int $port 端口号
+     * @param string $ip   IP地址
+     * @param int    $port 端口号
      */
-    public function __construct(string $ip, int $port)
-    {
+    public function __construct(
+        private readonly string $ip,
+        private readonly int $port,
+    ) {
         parent::__construct(AttributeType::RESPONSE_ADDRESS);
-        $this->ip = $ip;
-        $this->port = $port;
         $this->family = IpUtils::getAddressFamily($ip);
     }
 
@@ -75,43 +65,32 @@ class ResponseAddress extends MessageAttribute
         return $this->family;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         return IpUtils::encodeAddress($this->ip, $this->port);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
         [$ip, $port] = IpUtils::decodeAddress($data, $offset);
 
-        if ($ip === null) {
+        if (null === $ip) {
             throw new InvalidArgumentException('无法解析RESPONSE-ADDRESS属性');
         }
 
+        // @phpstan-ignore new.static
         return new static($ip, $port);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         // 地址族是IPv4还是IPv6，长度不同
-        $ipLength = $this->family === IpUtils::IPV4 ? 4 : 16;
+        $ipLength = IpUtils::IPV4 === $this->family ? 4 : 16;
 
         // 1字节（保留）+ 1字节（地址族）+ 2字节（端口）+ IP地址长度
         return 4 + $ipLength;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         return sprintf('RESPONSE-ADDRESS: %s', IpUtils::formatAddressPort($this->ip, $this->port));

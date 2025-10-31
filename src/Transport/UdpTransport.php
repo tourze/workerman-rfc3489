@@ -5,6 +5,7 @@ namespace Tourze\Workerman\RFC3489\Transport;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Tourze\Workerman\RFC3489\Exception\MessageFormatException;
+use Tourze\Workerman\RFC3489\Exception\StunTransportException;
 use Tourze\Workerman\RFC3489\Exception\TransportException;
 use Tourze\Workerman\RFC3489\Message\StunMessage;
 
@@ -16,39 +17,26 @@ use Tourze\Workerman\RFC3489\Message\StunMessage;
 class UdpTransport implements StunTransport
 {
     /**
-     * UDP socket
+     * UDP套接字
      *
      * @var \Socket|null
      */
-    private $socket = null;
+    private $socket;
 
     /**
      * 传输配置
-     *
-     * @var TransportConfig
      */
     private TransportConfig $config;
 
     /**
      * 是否已绑定
-     *
-     * @var bool
      */
     private bool $bound = false;
 
     /**
      * 上次错误信息
-     *
-     * @var string|null
      */
     private ?string $lastError = null;
-
-    /**
-     * 日志记录器
-     *
-     * @var LoggerInterface|null
-     */
-    private ?LoggerInterface $logger;
 
     /**
      * 创建一个新的UDP传输实例
@@ -56,10 +44,11 @@ class UdpTransport implements StunTransport
      * @param TransportConfig|null $config 传输配置，为null时使用默认配置
      * @param LoggerInterface|null $logger 日志记录器
      */
-    public function __construct(?TransportConfig $config = null, ?LoggerInterface $logger = null)
-    {
+    public function __construct(
+        ?TransportConfig $config = null,
+        private readonly ?LoggerInterface $logger = null,
+    ) {
         $this->config = $config ?? TransportConfig::createDefault();
-        $this->logger = $logger;
 
         $this->init();
     }
@@ -67,26 +56,31 @@ class UdpTransport implements StunTransport
     /**
      * 初始化UDP socket
      *
-     * @return void
      * @throws TransportException 如果创建socket失败
      */
     private function init(): void
     {
-        if ($this->socket !== null) {
+        if (null !== $this->socket) {
             return;
         }
 
         // 创建UDP socket
-        $this->socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 
-        if ($this->socket === false) {
+        if (false === $socket) {
             $error = socket_strerror(socket_last_error());
             $this->lastError = $error;
-            $this->logError("创建UDP socket失败: $error");
+            $this->logError("创建UDP socket失败: {$error}");
             throw TransportException::connectionFailed('', 0, $error);
         }
 
+        $this->socket = $socket;
+
         // 设置socket选项
+        if (null === $this->socket) {
+            throw new TransportException('Socket为null，无法设置选项');
+        }
+
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVBUF, $this->config->getBufferSize());
         socket_set_option($this->socket, SOL_SOCKET, SO_SNDBUF, $this->config->getBufferSize());
 
@@ -96,7 +90,7 @@ class UdpTransport implements StunTransport
         $microseconds = ($timeout % 1000) * 1000;
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, [
             'sec' => $seconds,
-            'usec' => $microseconds
+            'usec' => $microseconds,
         ]);
 
         // 设置发送超时
@@ -105,7 +99,7 @@ class UdpTransport implements StunTransport
         $microseconds = ($timeout % 1000) * 1000;
         socket_set_option($this->socket, SOL_SOCKET, SO_SNDTIMEO, [
             'sec' => $seconds,
-            'usec' => $microseconds
+            'usec' => $microseconds,
         ]);
 
         // 如果配置了绑定地址和端口，则进行绑定
@@ -117,170 +111,309 @@ class UdpTransport implements StunTransport
         $this->setBlocking($this->config->isBlocking());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send(StunMessage $message, string $ip, int $port): bool
     {
-        if ($this->socket === null) {
+        if (null === $this->socket) {
             $this->init();
         }
 
+        if (null === $this->socket) {
+            throw new StunTransportException('无法初始化UDP socket');
+        }
+
         $data = $message->encode();
-        $this->logDebug("发送STUN消息到 $ip:$port: " . bin2hex($data));
+        $this->logDebug("发送STUN消息到 {$ip}:{$port}: " . bin2hex($data));
 
         $retryCount = $this->config->getRetryCount();
         $retryInterval = $this->config->getRetryInterval();
 
-        for ($attempt = 0; $attempt <= $retryCount; $attempt++) {
+        for ($attempt = 0; $attempt <= $retryCount; ++$attempt) {
             if ($attempt > 0) {
-                $this->logInfo("重试发送STUN消息到 $ip:$port (尝试 $attempt/$retryCount)");
+                $this->logInfo("重试发送STUN消息到 {$ip}:{$port} (尝试 {$attempt}/{$retryCount})");
                 usleep($retryInterval * 1000); // 毫秒转微秒
+            }
+
+            if (null === $this->socket) {
+                throw new StunTransportException('Socket为null，无法发送数据');
             }
 
             $result = @socket_sendto($this->socket, $data, strlen($data), 0, $ip, $port);
 
-            if ($result !== false) {
+            if (false !== $result) {
                 return true;
+            }
+
+            if (null === $this->socket) {
+                throw new StunTransportException('Socket为null，无法获取错误信息');
             }
 
             $error = socket_strerror(socket_last_error($this->socket));
             $this->lastError = $error;
-            $this->logWarning("发送STUN消息到 $ip:$port 失败: $error");
+            $this->logWarning("发送STUN消息到 {$ip}:{$port} 失败: {$error}");
         }
 
-        $this->logError("发送STUN消息到 $ip:$port 失败，已重试 $retryCount 次");
+        $this->logError("发送STUN消息到 {$ip}:{$port} 失败，已重试 {$retryCount} 次");
+
         return false;
     }
 
     /**
-     * {@inheritdoc}
+     * 接收STUN消息
+     *
+     * @param int $timeout 接收超时时间（毫秒），0表示不超时
+     *
+     * @return array{0: StunMessage, 1: string, 2: int}|null 接收到的消息和源地址，格式为 [StunMessage, string $ip, int $port] 或 null
      */
     public function receive(int $timeout = 0): ?array
     {
-        if ($this->socket === null) {
+        if (null === $this->socket) {
             $this->init();
         }
 
-        // 如果设置了自定义超时，则临时修改socket选项
-        if ($timeout > 0) {
-            $originalTimeout = socket_get_option($this->socket, SOL_SOCKET, SO_RCVTIMEO);
-            $seconds = intdiv($timeout, 1000);
-            $microseconds = ($timeout % 1000) * 1000;
-            socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, [
-                'sec' => $seconds,
-                'usec' => $microseconds
-            ]);
+        if (null === $this->socket) {
+            throw new StunTransportException('无法初始化UDP socket');
         }
 
-        $buffer = '';
-        $ip = '';
-        $port = 0;
+        $originalTimeout = $this->applyCustomTimeoutIfNeeded($timeout);
 
         try {
-            $bufferSize = $this->config->getBufferSize();
-            $result = @socket_recvfrom($this->socket, $buffer, $bufferSize, 0, $ip, $port);
+            $result = $this->receiveRawData();
+            $this->restoreTimeoutIfNeeded($timeout, $originalTimeout);
 
-            // 如果设置了自定义超时，则恢复原来的设置
-            if ($timeout > 0) {
-                socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, $originalTimeout);
-            }
-
-            if ($result === false) {
-                $error = socket_strerror(socket_last_error($this->socket));
-                $this->lastError = $error;
-
-                // 如果是超时错误
-                if (in_array(socket_last_error($this->socket), [SOCKET_ETIMEDOUT, SOCKET_EAGAIN, SOCKET_EINPROGRESS])) {
-                    $this->logDebug("接收STUN消息超时");
-                    return null;
-                }
-
-                $this->logWarning("接收STUN消息失败: $error");
-                return null;
-            }
-
-            if ($result === 0) {
-                $this->logDebug("接收到空数据");
-                return null;
-            }
-
-            $this->logDebug("接收到来自 $ip:$port 的数据: " . bin2hex($buffer));
-
-            // 尝试解析为STUN消息
-            try {
-                $message = StunMessage::decode($buffer);
-                $this->logInfo("成功解析来自 $ip:$port 的STUN消息");
-
-                return [$message, $ip, $port];
-            } catch (MessageFormatException $e) {
-                $this->lastError = $e->getMessage();
-                $this->logWarning("来自 $ip:$port 的数据不是有效的STUN消息: " . $e->getMessage());
-                return null;
-            }
+            return $this->processReceivedData($result);
         } catch (\Throwable $e) {
-            // 如果设置了自定义超时，确保恢复原来的设置
-            if ($timeout > 0) {
-                socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, $originalTimeout);
-            }
+            $this->restoreTimeoutIfNeeded($timeout, $originalTimeout);
+            $this->handleReceiveException($e);
 
-            $this->lastError = $e->getMessage();
-            $this->logError("接收STUN消息时发生异常: " . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * {@inheritdoc}
+     * 应用自定义超时并返回原始设置（如果需要）
+     *
+     * @param int $timeout 超时时间（毫秒）
+     *
+     * @return array<string, int>|null 原始超时设置，如果未设置自定义超时则返回null
      */
+    private function applyCustomTimeoutIfNeeded(int $timeout): ?array
+    {
+        if ($timeout <= 0) {
+            return null;
+        }
+
+        if (null === $this->socket) {
+            throw new StunTransportException('Socket为null，无法获取接收超时选项');
+        }
+
+        $originalTimeout = socket_get_option($this->socket, SOL_SOCKET, SO_RCVTIMEO);
+        if (!is_array($originalTimeout)) {
+            $originalTimeout = null;
+        }
+
+        $seconds = intdiv($timeout, 1000);
+        $microseconds = ($timeout % 1000) * 1000;
+
+        if (null === $this->socket) {
+            throw new StunTransportException('Socket为null，无法设置接收超时选项');
+        }
+
+        socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, [
+            'sec' => $seconds,
+            'usec' => $microseconds,
+        ]);
+
+        return $originalTimeout;
+    }
+
+    /**
+     * 恢复原始超时设置（如果需要）
+     *
+     * @param int                          $timeout         超时时间（毫秒）
+     * @param array<string, int>|null $originalTimeout 原始超时设置
+     */
+    private function restoreTimeoutIfNeeded(int $timeout, ?array $originalTimeout): void
+    {
+        if ($timeout > 0 && null !== $originalTimeout) {
+            if (null === $this->socket) {
+                throw new StunTransportException('Socket为null，无法恢复接收超时选项');
+            }
+
+            socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, $originalTimeout);
+        }
+    }
+
+    /**
+     * 接收原始数据
+     *
+     * @return array{0: int|false, 1: string, 2: string, 3: int} [result, buffer, ip, port]
+     */
+    private function receiveRawData(): array
+    {
+        $buffer = '';
+        $ip = '';
+        $port = 0;
+        $bufferSize = $this->config->getBufferSize();
+
+        if (null === $this->socket) {
+            throw new StunTransportException('Socket为null，无法接收数据');
+        }
+
+        $result = @socket_recvfrom($this->socket, $buffer, $bufferSize, 0, $ip, $port);
+
+        return [$result, $buffer, $ip, $port];
+    }
+
+    /**
+     * 处理接收到的数据
+     *
+     * @param array{0: int|false, 1: string, 2: string, 3: int} $receiveResult [result, buffer, ip, port]
+     *
+     * @return array{0: StunMessage, 1: string, 2: int}|null 解析后的消息或null
+     */
+    private function processReceivedData(array $receiveResult): ?array
+    {
+        [$result, $buffer, $ip, $port] = $receiveResult;
+
+        if (false === $result) {
+            return $this->handleReceiveError();
+        }
+
+        if (0 === $result) {
+            $this->logDebug('接收到空数据');
+
+            return null;
+        }
+
+        $this->logDebug("接收到来自 {$ip}:{$port} 的数据: " . bin2hex($buffer));
+
+        return $this->parseStunMessage($buffer, $ip, $port);
+    }
+
+    /**
+     * 处理接收错误
+     */
+    private function handleReceiveError(): null
+    {
+        if (null === $this->socket) {
+            $this->lastError = 'Socket为null，无法获取错误信息';
+            $this->logWarning('Socket为null，无法获取错误信息');
+
+            return null;
+        }
+
+        $error = socket_strerror(socket_last_error($this->socket));
+        $this->lastError = $error;
+
+        // 如果是超时错误
+        if (in_array(socket_last_error($this->socket), [SOCKET_ETIMEDOUT, SOCKET_EAGAIN, SOCKET_EINPROGRESS], true)) {
+            $this->logDebug('接收STUN消息超时');
+
+            return null;
+        }
+
+        $this->logWarning("接收STUN消息失败: {$error}");
+
+        return null;
+    }
+
+    /**
+     * 解析STUN消息
+     *
+     * @param string $buffer STUN消息数据
+     * @param string $ip     发送方IP
+     * @param int    $port   发送方端口
+     *
+     * @return array{0: StunMessage, 1: string, 2: int}|null 解析后的消息或null
+     */
+    private function parseStunMessage(string $buffer, string $ip, int $port): ?array
+    {
+        try {
+            $message = StunMessage::decode($buffer);
+            $this->logInfo("成功解析来自 {$ip}:{$port} 的STUN消息");
+
+            return [$message, $ip, $port];
+        } catch (MessageFormatException $e) {
+            $this->lastError = $e->getMessage();
+            $this->logWarning("来自 {$ip}:{$port} 的数据不是有效的STUN消息: " . $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * 处理接收异常
+     *
+     * @param \Throwable $e 异常
+     */
+    private function handleReceiveException(\Throwable $e): void
+    {
+        $this->lastError = $e->getMessage();
+        $this->logError('接收STUN消息时发生异常: ' . $e->getMessage());
+    }
+
     public function bind(string $ip, int $port): bool
     {
-        if ($this->socket === null) {
+        if (null === $this->socket) {
             $this->init();
         }
 
-        if ($this->bound) {
-            $this->logWarning("UDP socket已经绑定，尝试重新绑定到 $ip:$port");
+        if (null === $this->socket) {
+            throw new StunTransportException('无法初始化UDP socket');
         }
 
-        $this->logInfo("绑定UDP socket到 $ip:$port");
+        if ($this->bound) {
+            $this->logWarning("UDP socket已经绑定，尝试重新绑定到 {$ip}:{$port}");
+        }
+
+        $this->logInfo("绑定UDP socket到 {$ip}:{$port}");
+
+        if (null === $this->socket) {
+            throw new StunTransportException('Socket为null，无法绑定地址');
+        }
 
         $result = @socket_bind($this->socket, $ip, $port);
 
-        if ($result === false) {
+        if (false === $result) {
+            if (null === $this->socket) {
+                throw new StunTransportException('Socket为null，无法获取绑定错误信息');
+            }
+
             $error = socket_strerror(socket_last_error($this->socket));
             $this->lastError = $error;
-            $this->logError("绑定UDP socket到 $ip:$port 失败: $error");
+            $this->logError("绑定UDP socket到 {$ip}:{$port} 失败: {$error}");
+
             return false;
         }
 
         $this->bound = true;
+
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function close(): void
     {
-        if ($this->socket !== null) {
-            $this->logInfo("关闭UDP socket");
+        if (null !== $this->socket) {
+            $this->logInfo('关闭UDP socket');
+            assert(null !== $this->socket);
             socket_close($this->socket);
             $this->socket = null;
             $this->bound = false;
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setBlocking(bool $blocking): void
     {
-        if ($this->socket === null) {
+        if (null === $this->socket) {
             $this->init();
         }
 
-        $this->logDebug("设置UDP socket为" . ($blocking ? "阻塞" : "非阻塞") . "模式");
+        if (null === $this->socket) {
+            throw new StunTransportException('无法初始化UDP socket');
+        }
+
+        $this->logDebug('设置UDP socket为' . ($blocking ? '阻塞' : '非阻塞') . '模式');
+        assert(null !== $this->socket);
         socket_set_nonblock($this->socket);
 
         if ($blocking) {
@@ -289,27 +422,26 @@ class UdpTransport implements StunTransport
     }
 
     /**
-     * {@inheritdoc}
+     * 获取本地地址
+     *
+     * @return array{0: string, 1: int}|null [IP, 端口] 或 null
      */
     public function getLocalAddress(): ?array
     {
-        if ($this->socket === null || !$this->bound) {
+        if (null === $this->socket || !$this->bound) {
             return null;
         }
 
         $ip = '';
         $port = 0;
 
-        if (socket_getsockname($this->socket, $ip, $port)) {
+        if (null !== $this->socket && socket_getsockname($this->socket, $ip, $port)) {
             return [$ip, $port];
         }
 
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLastError(): ?string
     {
         return $this->lastError;
@@ -329,12 +461,10 @@ class UdpTransport implements StunTransport
      * 设置配置
      *
      * @param TransportConfig $config 传输配置
-     * @return self 当前实例，用于链式调用
      */
-    public function setConfig(TransportConfig $config): self
+    public function setConfig(TransportConfig $config): void
     {
         $this->config = $config;
-        return $this;
     }
 
     /**
@@ -351,12 +481,11 @@ class UdpTransport implements StunTransport
      * 日志记录 - 调试级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logDebug(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::DEBUG, "[UdpTransport] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::DEBUG, "[UdpTransport] {$message}");
         }
     }
 
@@ -364,12 +493,11 @@ class UdpTransport implements StunTransport
      * 日志记录 - 信息级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logInfo(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::INFO, "[UdpTransport] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::INFO, "[UdpTransport] {$message}");
         }
     }
 
@@ -377,12 +505,11 @@ class UdpTransport implements StunTransport
      * 日志记录 - 警告级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logWarning(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::WARNING, "[UdpTransport] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::WARNING, "[UdpTransport] {$message}");
         }
     }
 
@@ -390,12 +517,11 @@ class UdpTransport implements StunTransport
      * 日志记录 - 错误级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logError(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::ERROR, "[UdpTransport] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::ERROR, "[UdpTransport] {$message}");
         }
     }
 

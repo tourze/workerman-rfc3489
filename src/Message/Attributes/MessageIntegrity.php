@@ -46,19 +46,18 @@ class MessageIntegrity extends MessageAttribute
      * 设置HMAC-SHA1哈希值
      *
      * @param string $hmac HMAC-SHA1哈希值
-     * @return self 当前实例，用于链式调用
      */
-    public function setHmac(string $hmac): self
+    public function setHmac(string $hmac): void
     {
         $this->hmac = $hmac;
-        return $this;
     }
 
     /**
      * 计算消息的HMAC-SHA1哈希值
      *
      * @param string $message 完整的STUN消息（不包括此属性）
-     * @param string $key 用于HMAC计算的密钥（通常是密码）
+     * @param string $key     用于HMAC计算的密钥（通常是密码）
+     *
      * @return string HMAC-SHA1哈希值
      */
     public static function calculateHmac(string $message, string $key): string
@@ -70,12 +69,14 @@ class MessageIntegrity extends MessageAttribute
      * 使用给定的密钥计算并设置HMAC-SHA1哈希值
      *
      * @param string $message 完整的STUN消息（不包括此属性）
-     * @param string $key 用于HMAC计算的密钥（通常是密码）
+     * @param string $key     用于HMAC计算的密钥（通常是密码）
+     *
      * @return self 当前实例，用于链式调用
      */
     public function calculateAndSetHmac(string $message, string $key): self
     {
         $this->hmac = self::calculateHmac($message, $key);
+
         return $this;
     }
 
@@ -83,34 +84,31 @@ class MessageIntegrity extends MessageAttribute
      * 验证消息的完整性
      *
      * @param string $message 完整的STUN消息（不包括此属性）
-     * @param string $key 用于HMAC计算的密钥（通常是密码）
+     * @param string $key     用于HMAC计算的密钥（通常是密码）
+     *
      * @return bool 如果验证通过，返回true
      */
     public function verify(string $message, string $key): bool
     {
         $calculatedHmac = self::calculateHmac($message, $key);
+
         return hash_equals($this->hmac, $calculatedHmac);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         return $this->hmac;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
-        if ($length !== Constants::MESSAGE_INTEGRITY_LENGTH) {
+        if (Constants::MESSAGE_INTEGRITY_LENGTH !== $length) {
             throw new InvalidArgumentException('MESSAGE-INTEGRITY属性长度必须是20字节');
         }
 
         $hmac = substr($data, $offset, Constants::MESSAGE_INTEGRITY_LENGTH);
 
+        // @phpstan-ignore new.static
         return new static($hmac);
     }
 

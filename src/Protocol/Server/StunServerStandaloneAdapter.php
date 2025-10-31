@@ -48,18 +48,18 @@ class StunServerStandaloneAdapter
     /**
      * 创建一个独立运行适配器
      *
-     * @param StunTransport $transport 传输层实例
-     * @param string $bindIp 绑定IP地址
-     * @param int $bindPort 绑定端口
-     * @param StunMessageRouter $messageRouter 消息路由器
-     * @param LoggerInterface|null $logger 日志记录器
+     * @param StunTransport        $transport     传输层实例
+     * @param string               $bindIp        绑定IP地址
+     * @param int                  $bindPort      绑定端口
+     * @param StunMessageRouter    $messageRouter 消息路由器
+     * @param LoggerInterface|null $logger        日志记录器
      */
     public function __construct(
         StunTransport $transport,
         string $bindIp,
         int $bindPort,
         StunMessageRouter $messageRouter,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
     ) {
         $this->transport = $transport;
         $this->bindIp = $bindIp;
@@ -71,13 +71,13 @@ class StunServerStandaloneAdapter
     /**
      * 启动服务器
      *
-     * @return void
      * @throws ProtocolException 如果无法绑定到指定地址和端口
      */
     public function start(): void
     {
         if ($this->running) {
-            $this->logWarning("服务器已经在运行");
+            $this->logWarning('服务器已经在运行');
+
             return;
         }
 
@@ -85,9 +85,9 @@ class StunServerStandaloneAdapter
 
         // 绑定到指定地址和端口
         if (!$this->transport->bind($this->bindIp, $this->bindPort)) {
-            $error = $this->transport->getLastError() ?? "未知错误";
-            $this->logError("无法绑定到 {$this->bindIp}:{$this->bindPort} - $error");
-            throw ProtocolException::serverConfigurationError("无法绑定到指定地址和端口: $error");
+            $error = $this->transport->getLastError() ?? '未知错误';
+            $this->logError("无法绑定到 {$this->bindIp}:{$this->bindPort} - {$error}");
+            throw ProtocolException::serverConfigurationError("无法绑定到指定地址和端口: {$error}");
         }
 
         $this->running = true;
@@ -98,8 +98,6 @@ class StunServerStandaloneAdapter
 
     /**
      * 运行主循环
-     *
-     * @return void
      */
     private function runMainLoop(): void
     {
@@ -109,26 +107,25 @@ class StunServerStandaloneAdapter
                 // 接收消息
                 $result = $this->transport->receive();
 
-                if ($result !== null) {
+                if (null !== $result) {
                     [$request, $clientIp, $clientPort] = $result;
 
-                    $this->logDebug("收到来自 $clientIp:$clientPort 的STUN消息");
+                    $this->logDebug("收到来自 {$clientIp}:{$clientPort} 的STUN消息");
 
                     // 路由消息
                     $response = $this->messageRouter->routeMessage($request, $clientIp, $clientPort);
 
-                    if ($response !== null) {
+                    if (null !== $response) {
                         // 发送响应
                         $this->transport->send($response, $clientIp, $clientPort);
 
-                        $this->logDebug("发送STUN响应到 $clientIp:$clientPort");
+                        $this->logDebug("发送STUN响应到 {$clientIp}:{$clientPort}");
                     }
                 }
-
             } catch (MessageFormatException $e) {
-                $this->logWarning("收到无效STUN消息: " . $e->getMessage());
+                $this->logWarning('收到无效STUN消息: ' . $e->getMessage());
             } catch (\Throwable $e) {
-                $this->logError("处理消息时发生错误: " . $e->getMessage());
+                $this->logError('处理消息时发生错误: ' . $e->getMessage());
             }
 
             // 短暂休眠，避免CPU占用过高
@@ -138,8 +135,6 @@ class StunServerStandaloneAdapter
 
     /**
      * 停止服务器
-     *
-     * @return void
      */
     public function stop(): void
     {
@@ -147,7 +142,7 @@ class StunServerStandaloneAdapter
             return;
         }
 
-        $this->logInfo("停止STUN服务器");
+        $this->logInfo('停止STUN服务器');
         $this->running = false;
 
         // 关闭传输层
@@ -157,7 +152,7 @@ class StunServerStandaloneAdapter
     /**
      * 获取服务器绑定地址
      *
-     * @return array|null 服务器绑定地址，格式为 [string $ip, int $port] 或 null 表示尚未绑定
+     * @return array{0: string, 1: int}|null 服务器绑定地址，格式为 [string $ip, int $port] 或 null 表示尚未绑定
      */
     public function getBindAddress(): ?array
     {
@@ -178,12 +173,11 @@ class StunServerStandaloneAdapter
      * 日志记录 - 调试级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logDebug(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::DEBUG, "[StandaloneAdapter] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::DEBUG, "[StandaloneAdapter] {$message}");
         }
     }
 
@@ -191,12 +185,11 @@ class StunServerStandaloneAdapter
      * 日志记录 - 信息级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logInfo(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::INFO, "[StandaloneAdapter] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::INFO, "[StandaloneAdapter] {$message}");
         }
     }
 
@@ -204,12 +197,11 @@ class StunServerStandaloneAdapter
      * 日志记录 - 警告级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logWarning(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::WARNING, "[StandaloneAdapter] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::WARNING, "[StandaloneAdapter] {$message}");
         }
     }
 
@@ -217,12 +209,11 @@ class StunServerStandaloneAdapter
      * 日志记录 - 错误级别
      *
      * @param string $message 日志消息
-     * @return void
      */
     private function logError(string $message): void
     {
-        if ($this->logger !== null) {
-            $this->logger->log(LogLevel::ERROR, "[StandaloneAdapter] $message");
+        if (null !== $this->logger) {
+            $this->logger->log(LogLevel::ERROR, "[StandaloneAdapter] {$message}");
         }
     }
 }

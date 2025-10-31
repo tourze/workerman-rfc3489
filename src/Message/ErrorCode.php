@@ -57,7 +57,7 @@ enum ErrorCode: int implements Itemable, Labelable, Selectable
     case STALE_CREDENTIALS = 430;
 
     /**
-     * 431 Integrity Check Failure
+     * 431 完整性检查失败 (Integrity Check Failure)
      *
      * MESSAGE-INTEGRITY校验失败
      *
@@ -84,7 +84,7 @@ enum ErrorCode: int implements Itemable, Labelable, Selectable
     case USE_TLS = 433;
 
     /**
-     * 500 Server Error
+     * 500 服务器错误 (Server Error)
      *
      * 服务器内部错误
      *
@@ -117,7 +117,7 @@ enum ErrorCode: int implements Itemable, Labelable, Selectable
             self::MISSING_USERNAME => 'Missing Username',
             self::USE_TLS => 'Use TLS',
             self::SERVER_ERROR => 'Server Error',
-            self::GLOBAL_FAILURE => 'Global Failure'
+            self::GLOBAL_FAILURE => 'Global Failure',
         };
     }
 
@@ -148,7 +148,7 @@ enum ErrorCode: int implements Itemable, Labelable, Selectable
      */
     public function getClass(): int
     {
-        return (int)($this->value / 100);
+        return (int) ($this->value / 100);
     }
 
     /**
@@ -165,6 +165,7 @@ enum ErrorCode: int implements Itemable, Labelable, Selectable
      * 从整数值获取错误代码枚举
      *
      * @param int $code 错误代码值
+     *
      * @return self|null 错误代码枚举或null
      */
     public static function fromValue(int $code): ?self
@@ -176,11 +177,12 @@ enum ErrorCode: int implements Itemable, Labelable, Selectable
      * 检查错误代码是否是有效的STUN错误代码
      *
      * @param int $code 错误代码
+     *
      * @return bool 是否是有效的错误代码
      */
     public static function isValid(int $code): bool
     {
-        return self::tryFrom($code) !== null;
+        return null !== self::tryFrom($code);
     }
 
     /**

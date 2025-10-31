@@ -29,8 +29,8 @@ class ErrorCodeAttribute extends MessageAttribute
     /**
      * 创建一个新的ERROR-CODE属性
      *
-     * @param int|ErrorCode $code 错误代码或ErrorCode枚举
-     * @param string|null $reason 原因短语，为null时使用默认原因短语
+     * @param int|ErrorCode $code   错误代码或ErrorCode枚举
+     * @param string|null   $reason 原因短语，为null时使用默认原因短语
      */
     public function __construct(int|ErrorCode $code, ?string $reason = null)
     {
@@ -69,11 +69,10 @@ class ErrorCodeAttribute extends MessageAttribute
     /**
      * 设置错误代码
      *
-     * @param int|ErrorCode $code 错误代码或ErrorCode枚举
-     * @param string|null $reason 原因短语，为null时使用默认原因短语
-     * @return self 当前实例，用于链式调用
+     * @param int|ErrorCode $code   错误代码或ErrorCode枚举
+     * @param string|null   $reason 原因短语，为null时使用默认原因短语
      */
-    public function setCode(int|ErrorCode $code, ?string $reason = null): self
+    public function setCode(int|ErrorCode $code, ?string $reason = null): void
     {
         if ($code instanceof ErrorCode) {
             $this->code = $code->value;
@@ -83,25 +82,18 @@ class ErrorCodeAttribute extends MessageAttribute
             $errorCodeEnum = ErrorCode::tryFrom($code);
             $this->reason = $reason ?? ($errorCodeEnum?->getDefaultReason() ?? 'Unknown Error');
         }
-
-        return $this;
     }
 
     /**
      * 设置原因短语
      *
      * @param string $reason 原因短语
-     * @return self 当前实例，用于链式调用
      */
-    public function setReason(string $reason): self
+    public function setReason(string $reason): void
     {
         $this->reason = $reason;
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         $class = intdiv($this->code, 100);
@@ -118,9 +110,6 @@ class ErrorCodeAttribute extends MessageAttribute
         return $header . $reasonBytes;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
         if ($length < 4) {
@@ -130,7 +119,7 @@ class ErrorCodeAttribute extends MessageAttribute
         // 解析错误代码
         $errorClassAndNumber = unpack('x2C1class/C1number', substr($data, $offset, 4));
 
-        if (!$errorClassAndNumber) {
+        if (false === $errorClassAndNumber) {
             throw new InvalidArgumentException('无法解析ERROR-CODE属性');
         }
 
@@ -148,21 +137,16 @@ class ErrorCodeAttribute extends MessageAttribute
             $reason = substr($data, $offset + 4, $length - 4);
         }
 
+        // @phpstan-ignore new.static
         return new static($code, $reason);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         // 4字节头部 + 原因短语长度
         return 4 + strlen($this->reason);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         return sprintf('ERROR-CODE: %d %s', $this->code, $this->reason);

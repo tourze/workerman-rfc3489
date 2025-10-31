@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Tourze\Workerman\RFC3489\Message\Attributes\MappedAddress;
 use Tourze\Workerman\RFC3489\Message\ErrorCode;
 use Tourze\Workerman\RFC3489\Message\MessageFactory;
 
@@ -39,7 +40,7 @@ MessageFactory::addServerAddresses(
 );
 
 // 添加映射地址
-$mappedAddress = new \Tourze\Workerman\RFC3489\Message\Attributes\MappedAddress('192.168.1.200', 54321);
+$mappedAddress = new MappedAddress('192.168.1.200', 54321);
 $genericResponse->addAttribute($mappedAddress);
 
 echo "使用通用方法创建的响应:\n";
@@ -71,4 +72,4 @@ $unknownAttrResponse = MessageFactory::createUnknownAttributesResponse(
     [0x7F01, 0x8001]
 );
 echo "未知属性错误响应:\n";
-echo $unknownAttrResponse . "\n"; 
+echo $unknownAttrResponse . "\n";

@@ -47,38 +47,26 @@ class Username extends MessageAttribute
      * 设置用户名
      *
      * @param string $username 用户名
-     * @return self 当前实例，用于链式调用
      */
-    public function setUsername(string $username): self
+    public function setUsername(string $username): void
     {
         $this->username = $username;
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getValue(): string
     {
         return $this->username;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function setValue(mixed $value): MessageAttribute
+    public function setValue(mixed $value): void
     {
         if (!is_string($value)) {
             throw new InvalidArgumentException('Username属性值必须是字符串');
         }
 
         $this->username = $value;
-        return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function encode(): string
     {
         // 用户名最大长度限制为512字节
@@ -96,9 +84,6 @@ class Username extends MessageAttribute
         return $encoded;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function decode(string $data, int $offset, int $length): static
     {
         // 检查类型是否匹配
@@ -113,25 +98,20 @@ class Username extends MessageAttribute
         // 提取用户名
         $username = substr($data, $offset + 4, $valueLength);
 
+        // @phpstan-ignore new.static
         return new static($username);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLength(): int
     {
         // 用户名长度，限制最大值
         return strlen(substr($this->username, 0, Constants::MAX_USERNAME_LENGTH));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString(): string
     {
         $type = AttributeType::tryFrom($this->getType());
-        $typeName = $type !== null ? $type->name : 'UNKNOWN';
+        $typeName = null !== $type ? $type->name : 'UNKNOWN';
 
         return sprintf(
             '%s (0x%04X): Length=%d, Value=%s',
@@ -160,7 +140,7 @@ class Username extends MessageAttribute
     protected function getPadding(): int
     {
         $length = $this->getLength();
-        if ($length % 4 === 0) {
+        if (0 === $length % 4) {
             return 0;
         }
 

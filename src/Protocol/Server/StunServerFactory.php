@@ -20,12 +20,13 @@ class StunServerFactory
     /**
      * 创建一个标准配置的STUN服务器
      *
-     * @param string $bindIp 服务器绑定IP地址
-     * @param int $bindPort 服务器绑定端口
-     * @param string $alternateIp 备用IP地址
-     * @param int $alternatePort 备用端口
-     * @param callable|null $authHandler 认证处理器
-     * @param LoggerInterface|null $logger 日志记录器
+     * @param string               $bindIp        服务器绑定IP地址
+     * @param int                  $bindPort      服务器绑定端口
+     * @param string               $alternateIp   备用IP地址
+     * @param int                  $alternatePort 备用端口
+     * @param callable|null        $authHandler   认证处理器
+     * @param LoggerInterface|null $logger        日志记录器
+     *
      * @return StunServer 配置好的STUN服务器实例
      */
     public static function create(
@@ -34,7 +35,7 @@ class StunServerFactory
         string $alternateIp = '0.0.0.0',
         int $alternatePort = 0,
         ?callable $authHandler = null,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
     ): StunServer {
         // 创建传输层
         $config = new TransportConfig();
@@ -44,7 +45,7 @@ class StunServerFactory
         $messageRouter = new StunMessageRouter($logger);
 
         // 创建请求处理器
-        $alternatePort = $alternatePort !== 0 ? $alternatePort : ($bindPort + 1);
+        $alternatePort = 0 !== $alternatePort ? $alternatePort : ($bindPort + 1);
         $bindingHandler = new BindingRequestHandler($transport, $alternateIp, $alternatePort, $authHandler, $logger);
         $sharedSecretHandler = new SharedSecretRequestHandler($logger);
 

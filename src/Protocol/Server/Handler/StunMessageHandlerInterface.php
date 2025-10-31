@@ -12,9 +12,10 @@ interface StunMessageHandlerInterface
     /**
      * 处理STUN消息
      *
-     * @param StunMessage $request 请求消息
-     * @param string $clientIp 客户端IP地址
-     * @param int $clientPort 客户端端口
+     * @param StunMessage $request    请求消息
+     * @param string      $clientIp   客户端IP地址
+     * @param int         $clientPort 客户端端口
+     *
      * @return StunMessage|null 响应消息，或null表示不需要响应
      */
     public function handleMessage(StunMessage $request, string $clientIp, int $clientPort): ?StunMessage;
