@@ -224,6 +224,7 @@ class IpUtils
      */
     private static function getIpViaServerVar(): ?string
     {
+        // @phpstan-ignore-next-line
         return $_SERVER['SERVER_ADDR'] ?? null;
     }
 
