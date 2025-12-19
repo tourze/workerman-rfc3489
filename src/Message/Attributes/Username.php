@@ -97,9 +97,7 @@ class Username extends MessageAttribute
 
         // 提取用户名
         $username = substr($data, $offset + 4, $valueLength);
-
-        // @phpstan-ignore new.static
-        return new static($username);
+        return new self($username);
     }
 
     public function getLength(): int

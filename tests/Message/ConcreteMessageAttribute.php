@@ -24,8 +24,7 @@ class ConcreteMessageAttribute extends MessageAttribute
 
     public static function decode(string $data, int $offset, int $length): static
     {
-        // @phpstan-ignore new.static
-        $attribute = new static(0);
+        $attribute = new self(0);
         $attribute->setValue(substr($data, $offset, $length));
 
         return $attribute;

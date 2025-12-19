@@ -19,7 +19,7 @@ use Tourze\Workerman\RFC3489\Transport\StunTransport;
 /**
  * STUN Binding 请求处理器
  */
-class BindingRequestHandler implements StunMessageHandlerInterface
+final class BindingRequestHandler implements StunMessageHandlerInterface
 {
     /**
      * STUN传输层

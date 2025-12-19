@@ -116,9 +116,7 @@ class Password extends MessageAttribute
 
         // 提取密码
         $password = substr($data, $offset + 4, $valueLength);
-
-        // @phpstan-ignore new.static
-        return new static($password);
+        return new self($password);
     }
 
     public function getLength(): int

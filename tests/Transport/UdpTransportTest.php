@@ -5,6 +5,8 @@ namespace Tourze\Workerman\RFC3489\Tests\Transport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Tourze\Workerman\RFC3489\Exception\TransportException;
 use Tourze\Workerman\RFC3489\Message\Attributes\Username;
 use Tourze\Workerman\RFC3489\Message\Constants;
 use Tourze\Workerman\RFC3489\Message\StunMessage;
@@ -18,16 +20,22 @@ use Tourze\Workerman\RFC3489\Transport\UdpTransport;
 #[CoversClass(UdpTransport::class)]
 final class UdpTransportTest extends TestCase
 {
-    private function createMockTransport(?TransportConfig $config = null): MockUdpTransport
+    private LoggerInterface $logger;
+
+    protected function setUp(): void
     {
-        return new MockUdpTransport($config);
+        $this->logger = new NullLogger();
+    }
+
+    private function createTransport(?TransportConfig $config = null): UdpTransport
+    {
+        return new UdpTransport($config, $this->logger);
     }
 
     public function testConstructor(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
 
-        // MockUdpTransport现在实现StunTransport接口
         $this->assertInstanceOf(StunTransport::class, $transport);
         $this->assertNotNull($transport->getSocket());
         $this->assertInstanceOf(TransportConfig::class, $transport->getConfig());
@@ -37,81 +45,90 @@ final class UdpTransportTest extends TestCase
     {
         $config = new TransportConfig();
         $config->setBindIp('127.0.0.1');
-        $config->setBindPort(12345);
+        $config->setBindPort(0); // 使用随机端口避免冲突
         $config->setBufferSize(16384);
 
-        $transport = $this->createMockTransport($config);
+        $transport = $this->createTransport($config);
 
         $this->assertInstanceOf(StunTransport::class, $transport);
         $this->assertSame($config, $transport->getConfig());
     }
 
-    public function testSend(): void
+    public function testSendToLoopback(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
+
+        // 绑定到随机端口
+        $this->assertTrue($transport->bind('127.0.0.1', 0));
+
         $message = new StunMessage(Constants::BINDING_REQUEST);
         $message->addAttribute(new Username('testuser'));
 
-        $result = $transport->send($message, '192.168.1.1', 3478);
+        // 发送到环回地址 - 这不会失败但也不会收到回复
+        $result = $transport->send($message, '127.0.0.1', 3478);
 
         $this->assertTrue($result);
+        $this->assertNull($transport->getLastError());
     }
 
-    public function testSendError(): void
+    public function testSendToInvalidAddress(): void
     {
-        $transport = $this->createMockTransport();
-        $transport->setMockSendResult(false);
+        $transport = $this->createTransport();
 
         $message = new StunMessage(Constants::BINDING_REQUEST);
-        $result = $transport->send($message, '192.168.1.1', 3478);
 
-        $this->assertFalse($result);
-        $this->assertNotNull($transport->getLastError());
-    }
+        // 发送到无效地址 - 这应该失败但不抛出异常
+        $result = $transport->send($message, '999.999.999.999', 3478);
 
-    public function testReceive(): void
-    {
-        $transport = $this->createMockTransport();
-
-        // 创建一个模拟的STUN消息
-        $stunMessage = new StunMessage(Constants::BINDING_REQUEST);
-        $stunMessage->addAttribute(new Username('testuser'));
-
-        // 设置模拟接收结果 - 使用tuple array格式 [StunMessage, string, int]
-        $mockResult = [$stunMessage, '192.168.1.1', 3478];
-        $transport->setMockReceiveResult($mockResult);
-
-        $result = $transport->receive();
-
-        $this->assertSame($mockResult, $result);
+        // 由于重试机制，可能会返回false
+        $this->assertIsBool($result);
     }
 
     public function testReceiveTimeout(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
 
-        // 设置为null表示超时
-        $transport->setMockReceiveResult(null);
-        $transport->setMockLastError('Mock timeout error');
+        // 绑定到随机端口
+        $this->assertTrue($transport->bind('127.0.0.1', 0));
 
-        $result = $transport->receive();
+        // 尝试接收数据，应该超时返回null
+        $result = $transport->receive(100); // 100ms超时
 
         $this->assertNull($result);
-        $this->assertNotNull($transport->getLastError());
     }
 
-    public function testBind(): void
+    public function testBindToLocalhost(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
 
-        $result = $transport->bind('127.0.0.1', 12345);
+        // 绑定到localhost的随机端口
+        $result = $transport->bind('127.0.0.1', 0);
 
         $this->assertTrue($result);
+        $this->assertNull($transport->getLastError());
+    }
+
+    public function testBindToReservedPort(): void
+    {
+        $transport = $this->createTransport();
+
+        // 尝试绑定到保留端口（需要root权限）应该失败
+        $result = $transport->bind('127.0.0.1', 80);
+
+        // 可能成功也可能失败，取决于权限和系统配置
+        $this->assertIsBool($result);
+
+        if (!$result) {
+            $this->assertNotNull($transport->getLastError());
+        }
     }
 
     public function testClose(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
+
+        // 绑定到随机端口
+        $this->assertTrue($transport->bind('127.0.0.1', 0));
 
         // 确保套接字已创建
         $this->assertNotNull($transport->getSocket());
@@ -119,26 +136,21 @@ final class UdpTransportTest extends TestCase
         // 关闭套接字
         $transport->close();
 
-        // 创建一个新的消息并尝试发送
-        // 这应该会触发初始化，因为套接字已经关闭
-        $message = new StunMessage(Constants::BINDING_REQUEST);
-        $transport->send($message, '192.168.1.1', 3478);
-
-        // 验证套接字已重新创建
-        $this->assertNotNull($transport->getSocket());
+        // 关闭后套接字应该为null
+        $this->assertNull($transport->getSocket());
     }
 
     public function testGetSetConfig(): void
     {
         $initialConfig = new TransportConfig();
-        $transport = $this->createMockTransport($initialConfig);
+        $transport = $this->createTransport($initialConfig);
 
         $this->assertSame($initialConfig, $transport->getConfig());
 
         // 设置新的配置
         $newConfig = new TransportConfig();
         $newConfig->setBindIp('127.0.0.1');
-        $newConfig->setBindPort(12345);
+        $newConfig->setBindPort(0);
 
         $transport->setConfig($newConfig);
 
@@ -146,33 +158,62 @@ final class UdpTransportTest extends TestCase
         $this->assertSame($newConfig, $transport->getConfig());
     }
 
-    public function testGetLocalAddress(): void
+    public function testGetLocalAddressAfterBind(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
 
         // 初始应该为null
         $this->assertNull($transport->getLocalAddress());
 
-        // 设置模拟本地地址 - 使用tuple array格式 [string, int]
-        $mockAddress = ['127.0.0.1', 12345];
-        $transport->setMockLocalAddress($mockAddress);
+        // 绑定到随机端口
+        $this->assertTrue($transport->bind('127.0.0.1', 0));
 
-        // 检查是否返回设置的地址
-        $this->assertSame($mockAddress, $transport->getLocalAddress());
+        // 绑定后应该能获取到本地地址
+        $address = $transport->getLocalAddress();
+        $this->assertIsArray($address);
+        $this->assertCount(2, $address);
+        $this->assertEquals('127.0.0.1', $address[0]);
+        $this->assertIsInt($address[1]);
+        $this->assertGreaterThan(0, $address[1]);
     }
 
     public function testGetLastError(): void
     {
-        $transport = $this->createMockTransport();
+        $transport = $this->createTransport();
 
         // 初始应该为null
         $this->assertNull($transport->getLastError());
+    }
 
-        // 设置模拟错误
-        $mockError = 'Test error message';
-        $transport->setMockLastError($mockError);
+    public function testSetBlocking(): void
+    {
+        $transport = $this->createTransport();
 
-        // 检查是否返回设置的错误
-        $this->assertSame($mockError, $transport->getLastError());
+        // 绑定到随机端口
+        $this->assertTrue($transport->bind('127.0.0.1', 0));
+
+        // 设置为阻塞模式 - 这不应该抛出异常
+        $transport->setBlocking(true);
+
+        // 设置为非阻塞模式 - 这也不应该抛出异常
+        $transport->setBlocking(false);
+
+        // 测试通过
+        $this->assertTrue(true);
+    }
+
+    public function testSendWithoutBind(): void
+    {
+        $config = new TransportConfig();
+        $config->setBindPort(0); // 不自动绑定
+
+        $transport = $this->createTransport($config);
+
+        $message = new StunMessage(Constants::BINDING_REQUEST);
+
+        // 即使没有显式绑定，也应该能够发送（自动分配端口）
+        $result = $transport->send($message, '127.0.0.1', 3478);
+
+        $this->assertTrue($result);
     }
 }

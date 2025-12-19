@@ -122,9 +122,7 @@ class ChangeRequest extends MessageAttribute
 
         $changeIp = ($flags & self::CHANGE_IP) !== 0;
         $changePort = ($flags & self::CHANGE_PORT) !== 0;
-
-        // @phpstan-ignore new.static
-        return new static($changeIp, $changePort);
+        return new self($changeIp, $changePort);
     }
 
     public function getLength(): int

@@ -19,7 +19,7 @@ use Tourze\Workerman\RFC3489\Utils\TransactionIdGenerator;
  *
  * 提供便捷方法创建各种类型的STUN消息
  */
-class MessageFactory
+final class MessageFactory
 {
     /**
      * 创建Binding请求消息

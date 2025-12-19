@@ -136,9 +136,7 @@ class ErrorCodeAttribute extends MessageAttribute
         if ($length > 4) {
             $reason = substr($data, $offset + 4, $length - 4);
         }
-
-        // @phpstan-ignore new.static
-        return new static($code, $reason);
+        return new self($code, $reason);
     }
 
     public function getLength(): int

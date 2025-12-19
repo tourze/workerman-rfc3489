@@ -77,9 +77,7 @@ class ChangedAddress extends MessageAttribute
         if (null === $ip) {
             throw new InvalidArgumentException('无法解析CHANGED-ADDRESS属性');
         }
-
-        // @phpstan-ignore new.static
-        return new static($ip, $port);
+        return new self($ip, $port);
     }
 
     public function getLength(): int

@@ -86,9 +86,7 @@ class UnknownAttributes extends MessageAttribute
                 $attributes[] = $attrValue[1];
             }
         }
-
-        // @phpstan-ignore new.static
-        return new static($attributes);
+        return new self($attributes);
     }
 
     public function getLength(): int

@@ -1,0 +1,57 @@
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    public: false
+
+  Tourze\Workerman\RFC3489\:
+    resource: '../../'
+    exclude:
+      - '../../Resources/'
+      - '../../Tests/'
+
+  # Transport services
+  Tourze\Workerman\RFC3489\Transport\:
+    resource: '../../Transport/'
+    public: true
+
+  # Protocol services
+  Tourze\Workerman\RFC3489\Protocol\:
+    resource: '../../Protocol/'
+    public: true
+
+  # Protocol Server services
+  Tourze\Workerman\RFC3489\Protocol\Server\:
+    resource: '../../Protocol/Server/'
+    public: true
+
+  # Protocol Server Handler services
+  Tourze\Workerman\RFC3489\Protocol\Server\Handler\:
+    resource: '../../Protocol/Server/Handler/'
+    public: true
+
+  # Protocol NAT Detection services
+  Tourze\Workerman\RFC3489\Protocol\NatDetection\:
+    resource: '../../Protocol/NatDetection/'
+    public: true
+
+  # Message services
+  Tourze\Workerman\RFC3489\Message\:
+    resource: '../../Message/'
+    public: true
+
+  # Message Attributes services
+  Tourze\Workerman\RFC3489\Message\Attributes\:
+    resource: '../../Message/Attributes/'
+    public: true
+
+  # Utils services
+  Tourze\Workerman\RFC3489\Utils\:
+    resource: '../../Utils/'
+    public: true
+
+  # Exception services
+  Tourze\Workerman\RFC3489\Exception\:
+    resource: '../../Exception/'
+    public: true

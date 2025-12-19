@@ -8,7 +8,7 @@
     "ext-sockets": "*",
     "psr/log": "^3|^2|^1",
     "symfony/dependency-injection": "^7.3",
-    "symfony/framework-bundle": "^7.3",
+    "symfony/framework-bundle": "^7.4",
     "symfony/yaml": "^7.3",
     "tourze/enum-extra": "1.0.*",
     "workerman/workerman": "^5.1"

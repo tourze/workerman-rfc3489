@@ -3,18 +3,12 @@
 namespace Tourze\Workerman\RFC3489\Tests\Protocol;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\TestCase;
+use Tourze\PHPUnitEnum\AbstractEnumTestCase;
 use Tourze\Workerman\RFC3489\Protocol\TransactionState;
 
-/**
- * TransactionState 测试类
- *
- * @internal
- *
- * @phpstan-ignore-next-line 这是一个UnitEnum测试，不继承AbstractEnumTestCase
- */
+
 #[CoversClass(TransactionState::class)]
-final class TransactionStateTest extends TestCase
+final class TransactionStateTest extends AbstractEnumTestCase
 {
     public function testEnumCases(): void
     {

@@ -142,9 +142,7 @@ class MappedAddress extends MessageAttribute
             if (null === $ip) {
                 throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
             }
-
-            // @phpstan-ignore new.static
-            return new static($ip, $port);
+            return new self($ip, $port);
         } catch (\Throwable $e) {
             throw new InvalidArgumentException('无法解析MAPPED-ADDRESS属性');
         }

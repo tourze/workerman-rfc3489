@@ -11,7 +11,7 @@ use Tourze\Workerman\RFC3489\Message\StunMessage;
 /**
  * STUN Shared Secret 请求处理器
  */
-class SharedSecretRequestHandler implements StunMessageHandlerInterface
+final class SharedSecretRequestHandler implements StunMessageHandlerInterface
 {
     /**
      * 创建一个Shared Secret请求处理器
